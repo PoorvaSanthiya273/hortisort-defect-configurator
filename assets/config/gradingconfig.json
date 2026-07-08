@@ -1,0 +1,7 @@
+{
+  "MeasurementLimit": {
+    "Min": 0,
+    "Max": 120
+  },
+  "NoOfBands": 10
+}
