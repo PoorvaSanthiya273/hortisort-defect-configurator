@@ -164,7 +164,7 @@ class DefectsStep extends StatelessWidget {
                       child: Center(
                           child: Text('${p.selectedDefectCount}',
                               style: const TextStyle(
-                                  color: Color(0xFF8DAA00),
+                                  color: Color(0xFFFFFFFF),
                                   fontSize: 16,
                                   fontWeight: FontWeight.w700)))),
                   const SizedBox(width: 10),
@@ -186,7 +186,7 @@ class DefectsStep extends StatelessWidget {
                       child: Center(
                           child: Text('${p.definitions.length}',
                               style: const TextStyle(
-                                  color: Color(0xFF8DAA00),
+                                  color: Color(0xFFFFFFFF),
                                   fontSize: 16,
                                   fontWeight: FontWeight.w700)))),
                   const SizedBox(width: 10),
@@ -256,75 +256,6 @@ class DefectsStep extends StatelessWidget {
         _chip('Clear', () => p.clearSelection()),
       ]),
       const SizedBox(height: 12),
-      // Zone selector
-      Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-            color: const Color(0xFF26384F),
-            borderRadius: BorderRadius.circular(6),
-            border: Border.all(color: const Color(0xFF4A4A4A))),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Row(children: [
-            const Text('Zones / Inspection Areas',
-                style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFFFFFFFF))),
-            const Spacer(),
-            TouchFeedback(
-                onTap: () => p.selectedZoneIds.length == p.zones.length
-                    ? p.zones.forEach((z) => p.toggleZone(z.id))
-                    : p.zones
-                        .where((z) => !p.selectedZoneIds.contains(z.id))
-                        .forEach((z) => p.toggleZone(z.id)),
-                child: const Text('Select All',
-                    style: TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF8DAA00),
-                        fontWeight: FontWeight.w600))),
-            const SizedBox(width: 10),
-            TouchFeedback(
-                onTap: () =>
-                    p.selectedZoneIds.toList().forEach((z) => p.toggleZone(z)),
-                child: const Text('Clear All',
-                    style: TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFFD8D8D8),
-                        fontWeight: FontWeight.w600))),
-          ]),
-          const SizedBox(height: 10),
-          Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: p.zones.map((z) {
-                final sel = p.selectedZoneIds.contains(z.id);
-                return TouchFeedback(
-                  onTap: () => p.toggleZone(z.id),
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                        color: sel
-                            ? const Color(0xFF4A4A4A)
-                            : const Color(0xFF26384F),
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(
-                            color: sel
-                                ? const Color(0xFF8DAA00)
-                                : const Color(0xFF4A4A4A))),
-                    child: Text(z.name,
-                        style: TextStyle(
-                            fontSize: 13,
-                            color: sel
-                                ? const Color(0xFFFFFFFF)
-                                : const Color(0xFFD8D8D8),
-                            fontWeight: FontWeight.w500)),
-                  ),
-                );
-              }).toList()),
-        ]),
-      ),
-      const SizedBox(height: 14),
       Expanded(
         child: filtered.isEmpty
             ? const Center(

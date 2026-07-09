@@ -1,18 +1,17 @@
 import 'package:flutter/foundation.dart';
 import '../models/defect_model.dart';
-import '../models/zone_model.dart';
+
 import '../models/histogram_config.dart';
 import '../models/classification_model.dart';
 
 class ConfiguratorProvider extends ChangeNotifier {
   final List<DefectModel> _defects = DefectModel.defaults;
-  final List<ZoneModel> _zones = ZoneModel.defaults;
+
   final HistogramConfig _histogramConfig = HistogramConfig();
   final List<OutputModel> _outputs = OutputModel.defaults;
   final List<ConfigurationModel> _configurations = [];
 
   List<DefectModel> get defects => _defects;
-  List<ZoneModel> get zones => _zones;
   HistogramConfig get histogramConfig => _histogramConfig;
   List<OutputModel> get outputs => _outputs;
   List<ConfigurationModel> get configurations => _configurations;
@@ -21,7 +20,7 @@ class ConfiguratorProvider extends ChangeNotifier {
   double _histogramMin = 0;
   double _histogramMax = 120;
   int _histogramNoOfBands = 10;
-  // Per-defect frequencies: 'defectId-zoneId' → {bandIndex: frequency}
+  // Per-defect frequencies: defectId → {bandIndex: frequency}
   final Map<String, Map<int, double>> _defectFrequencies = {};
 
   double get histogramMin => _histogramMin;
@@ -93,37 +92,31 @@ class ConfiguratorProvider extends ChangeNotifier {
   final Set<String> _selectedDefectIds = {};
   Set<String> get selectedDefectIds => _selectedDefectIds;
   int get selectedDefectCount => _selectedDefectIds.length;
-  bool get canProceedFromDefects =>
-      _selectedDefectIds.isNotEmpty && _selectedZoneIds.isNotEmpty;
+  bool get canProceedFromDefects => _selectedDefectIds.isNotEmpty;
   DefectModel? get activeDefect => _selectedDefectIds.isNotEmpty
       ? _defects.firstWhere((d) => d.id == _selectedDefectIds.first)
       : _defects.first;
 
-  // Zone selection (Step 2)
-  final Set<String> _selectedZoneIds = {'Z01'};
-  Set<String> get selectedZoneIds => _selectedZoneIds;
-  int get selectedZoneCount => _selectedZoneIds.length;
-  bool get canProceedFromZones => _selectedZoneIds.isNotEmpty;
-
-  // Generated definitions: 'defectId-zoneId' keys
-  List<String> get definitions => _selectedDefectIds
-      .expand((dId) => _selectedZoneIds.map((zId) => '$dId-$zId'))
-      .toList();
-
-  void toggleZone(String id) {
-    if (_selectedZoneIds.contains(id))
-      _selectedZoneIds.remove(id);
-    else
-      _selectedZoneIds.add(id);
-    _isSaved = false;
-    notifyListeners();
+  // Generated definitions: Cartesian product of Good/Bad across selected defects
+  List<String> get definitions {
+    final selected = _selectedDefectIds.toList()..sort();
+    if (selected.isEmpty) return [];
+    final n = selected.length;
+    final total = 1 << n;
+    return List<String>.generate(total, (i) {
+      final parts = List<String>.generate(n, (j) {
+        final grade = (i & (1 << j)) != 0 ? 'Good' : 'Bad';
+        return '${selected[j]}=$grade';
+      });
+      return parts.join('|');
+    });
   }
 
-  // Per-definition thresholds: 'defectId-zoneId' → (xThreshold, yFreq)
+  // Per-defect thresholds: defectId → (xThreshold, yFreq)
   final Map<String, ({double xThreshold, double yFreq})> _defThresholds = {};
   String? _currentDefKey;
 
-  String? get currentDefKey => _currentDefKey; // for histogram step
+  String? get currentDefKey => _currentDefKey;
 
   void setCurrentDefinition(String key) {
     _currentDefKey = key;
@@ -152,20 +145,21 @@ class ConfiguratorProvider extends ChangeNotifier {
   }
 
   void saveCurrentDef() {
-    var k = _currentDefKey;
-    if (k == null && definitions.isNotEmpty) k = definitions.first;
-    if (k == null) return;
-    if (!_defThresholds.containsKey(k))
-      _defThresholds[k] = (xThreshold: 40, yFreq: 30);
-    final parts = k.split('-');
-    _defects.firstWhere((d) => d.id == parts[0]).configured = true;
+    final k = _currentDefKey;
+    if (k == null && _selectedDefectIds.isNotEmpty) {
+      final defId = _selectedDefectIds.first;
+      _defThresholds.putIfAbsent(defId, () => (xThreshold: 40, yFreq: 30));
+      _defects.firstWhere((d) => d.id == defId).configured = true;
+    } else if (k != null) {
+      _defThresholds.putIfAbsent(k, () => (xThreshold: 40, yFreq: 30));
+      _defects.firstWhere((d) => d.id == k).configured = true;
+    }
     notifyListeners();
   }
 
   void saveAllDefs() {
-    for (final dk in definitions) {
-      final parts = dk.split('-');
-      _defects.firstWhere((d) => d.id == parts[0]).configured = true;
+    for (final id in _selectedDefectIds) {
+      _defects.firstWhere((d) => d.id == id).configured = true;
     }
     _isSaved = false;
     notifyListeners();
@@ -201,42 +195,20 @@ class ConfiguratorProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Per-definition grades: 'defectId-zoneId' → 'Good'|'Slightly Bad'|'Bad'
-  final Map<String, String> _defGrades = {};
-  String? gradeFor(String defKey) => _defGrades[defKey];
-  void setDefGrade(String defKey, String grade) {
-    _defGrades[defKey] = grade;
-    _isSaved = false;
-    notifyListeners();
-  }
-
-  void autoAssignGrades() {
-    for (final dk in definitions) {
-      if (!_defThresholds.containsKey(dk)) {
-        _defThresholds[dk] = (xThreshold: 40, yFreq: 30);
-      }
-      _defGrades[dk] = _classifyDef(dk);
-    }
-    _isSaved = false;
-    notifyListeners();
-  }
-
+  // Auto-assign: assign all-combination-Good to O1, all-Bad to O3, mixed to O2
   void autoAssignCombos() {
     for (final dk in definitions) {
+      final tokens = dk.split('|');
+      final allGood = tokens.every((t) => t.endsWith('=Good'));
+      final allBad = tokens.every((t) => t.endsWith('=Bad'));
       _comboOutlets[dk] = {
-        _defGrades[dk] == 'Good'
+        allGood
             ? 1
-            : _defGrades[dk] == 'Slightly Bad'
-                ? 2
-                : 3
+            : allBad
+                ? 3
+                : 2
       };
     }
-    _isSaved = false;
-    notifyListeners();
-  }
-
-  void resetGrades() {
-    _defGrades.clear();
     _isSaved = false;
     notifyListeners();
   }
@@ -302,12 +274,10 @@ class ConfiguratorProvider extends ChangeNotifier {
 
   // Outlet filters
   String _filterDefect = 'all',
-      _filterZone = 'all',
       _filterGrade = 'all',
       _filterOutlet = 'all',
       _filterStatus = 'all';
   String get filterDefect => _filterDefect;
-  String get filterZone => _filterZone;
   String get filterGrade => _filterGrade;
   String get filterOutlet => _filterOutlet;
   String get filterStatus => _filterStatus;
@@ -328,11 +298,20 @@ class ConfiguratorProvider extends ChangeNotifier {
               comboLabel(dk).toLowerCase().contains(_searchQuery.toLowerCase()))
           .toList();
     if (_filterDefect != 'all')
-      list = list.where((dk) => dk.startsWith(_filterDefect)).toList();
-    if (_filterZone != 'all')
-      list = list.where((dk) => dk.endsWith('-$_filterZone')).toList();
-    if (_filterGrade != 'all')
-      list = list.where((dk) => gradeFor(dk) == _filterGrade).toList();
+      list = list.where((dk) => dk.contains('$_filterDefect=')).toList();
+    if (_filterGrade == 'Good')
+      list = list
+          .where((dk) => dk.split('|').every((t) => t.endsWith('=Good')))
+          .toList();
+    else if (_filterGrade == 'Bad')
+      list = list
+          .where((dk) => dk.split('|').every((t) => t.endsWith('=Bad')))
+          .toList();
+    else if (_filterGrade == 'Mixed')
+      list = list
+          .where((dk) =>
+              dk.split('|').map((t) => t.split('=').last).toSet().length > 1)
+          .toList();
     if (_filterOutlet != 'all')
       list = list
           .where((dk) => isComboInOutlet(dk, int.parse(_filterOutlet)))
@@ -344,11 +323,6 @@ class ConfiguratorProvider extends ChangeNotifier {
 
   void setFilterDefect(String v) {
     _filterDefect = v;
-    notifyListeners();
-  }
-
-  void setFilterZone(String v) {
-    _filterZone = v;
     notifyListeners();
   }
 
@@ -369,17 +343,22 @@ class ConfiguratorProvider extends ChangeNotifier {
 
   void clearAllFilters() {
     _searchQuery = '';
-    _filterDefect =
-        _filterZone = _filterGrade = _filterOutlet = _filterStatus = 'all';
+    _filterDefect = _filterGrade = _filterOutlet = _filterStatus = 'all';
     notifyListeners();
   }
 
   // Summary stats
   int get totalCombinations => definitions.length;
-  int get goodCount => definitions.where((dk) => gradeFor(dk) == 'Good').length;
-  int get sbCount =>
-      definitions.where((dk) => gradeFor(dk) == 'Slightly Bad').length;
-  int get badCount => definitions.where((dk) => gradeFor(dk) == 'Bad').length;
+  int get goodCount => definitions
+      .where((dk) => dk.split('|').every((t) => t.endsWith('=Good')))
+      .length;
+  int get sbCount => definitions
+      .where((dk) =>
+          dk.split('|').map((t) => t.split('=').last).toSet().length > 1)
+      .length;
+  int get badCount => definitions
+      .where((dk) => dk.split('|').every((t) => t.endsWith('=Bad')))
+      .length;
   int get configuredCount =>
       definitions.where((dk) => comboStatus(dk) == 'Configured').length;
   int get pendingCount =>
@@ -392,13 +371,7 @@ class ConfiguratorProvider extends ChangeNotifier {
 
   // Validation
   String comboStatus(String defKey) {
-    final grade = gradeFor(defKey);
-    final assigned = isComboAssigned(defKey);
-    if (grade != null && assigned) return 'Configured';
-    if (grade == null && !assigned) return 'Missing Both';
-    if (grade == null) return 'Missing Grade';
-    if (!assigned) return 'Pending';
-    return 'Configured';
+    return isComboAssigned(defKey) ? 'Configured' : 'Pending';
   }
 
   // Validation warnings
@@ -422,25 +395,16 @@ class ConfiguratorProvider extends ChangeNotifier {
     return w;
   }
 
-  // Export JSON matching ADANI2025FC16New structure
+  // Export JSON
   String exportJSON() {
     final sb = StringBuffer();
     sb.writeln('{');
-    sb.writeln('  "FeatureTable": [');
+    sb.writeln('  "Combinations": [');
     for (final dk in definitions) {
-      final parts = dk.split('-');
-      final d = _defects.firstWhere((x) => x.id == parts[0]);
-      final z = _zones.firstWhere((x) => x.id == parts[1]);
-      final grade = gradeFor(dk) ?? 'Ungraded';
       final outlets = _comboOutlets[dk]?.toList() ?? [];
-      final t = _defThresholds[dk];
       sb.writeln('    {');
-      sb.writeln('      "FeatureName": "${d.name}",');
-      sb.writeln('      "Zone": "${z.name}",');
-      sb.writeln('      "FeatureCombination": "$dk",');
-      sb.writeln('      "FeatureGradeName": "$grade",');
-      sb.writeln('      "XThreshold": ${t?.xThreshold ?? 40},');
-      sb.writeln('      "YThreshold": ${t?.yFreq ?? 30},');
+      sb.writeln('      "Combination": "$dk",');
+      sb.writeln('      "CombinationLabel": "${comboLabel(dk)}",');
       sb.writeln('      "OutletMapping": [${outlets.join(',')}]');
       sb.writeln('    },');
     }
@@ -464,10 +428,11 @@ class ConfiguratorProvider extends ChangeNotifier {
   }
 
   String comboLabel(String defKey) {
-    final parts = defKey.split('-');
-    final d = _defects.firstWhere((x) => x.id == parts[0]),
-        z = _zones.firstWhere((x) => x.id == parts[1]);
-    return '${d.name} @ ${z.name}';
+    return defKey.split('|').map((token) {
+      final parts = token.split('=');
+      final d = _defects.firstWhere((x) => x.id == parts[0]);
+      return '${d.name}: ${parts[1]}';
+    }).join(', ');
   }
 
   void resetCombos() {
@@ -475,8 +440,6 @@ class ConfiguratorProvider extends ChangeNotifier {
     _isSaved = false;
     notifyListeners();
   }
-
-  int get assignedGradeCount => _defGrades.length;
 
   // Search & filter
   String _searchQuery = '';
@@ -542,10 +505,6 @@ class ConfiguratorProvider extends ChangeNotifier {
     _sortBy = 'Name';
     notifyListeners();
   }
-
-  // Zone selection
-  String _selectedZoneId = 'Z01';
-  String get selectedZoneId => _selectedZoneId;
 
   // Preset
   String _selectedPreset = 'Balanced';
@@ -669,15 +628,6 @@ class ConfiguratorProvider extends ChangeNotifier {
     return 'Bad';
   }
 
-  String _classifyDef(String defKey) {
-    final t = _defThresholds[defKey];
-    if (t == null) return 'Bad';
-    final yT = t.yFreq;
-    final avgY = _sampleData.map((p) => p.y).reduce((a, b) => a + b) /
-        _sampleData.length;
-    return avgY < yT ? 'Good' : 'Bad';
-  }
-
   double get goodPct => _sampleData.isEmpty
       ? 0
       : (_sampleData.where((p) => _classify(p.x, p.y) == 'Good').length /
@@ -764,13 +714,6 @@ class ConfiguratorProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Zone
-  void selectZone(String id) {
-    _selectedZoneId = id;
-    _isSaved = false;
-    notifyListeners();
-  }
-
   // Advanced
   void toggleAdvanced() {
     _showAdvanced = !_showAdvanced;
@@ -822,7 +765,6 @@ class ConfiguratorProvider extends ChangeNotifier {
     final config = ConfigurationModel(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       defectId: defect.id,
-      zoneId: _selectedZoneId,
       qualityClass: classification?.qualityClass ?? '',
       outputId: recommendation?.outputName ?? '',
       preset: _selectedPreset,

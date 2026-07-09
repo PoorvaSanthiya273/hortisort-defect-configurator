@@ -9,7 +9,11 @@ class AppTheme {
   static const Color secondaryText = Color(0xFFD8D8D8);
   static const Color greenHighlight = Color(0xFF8DAA00);
   static const Color orangeBar = Color(0xFFF5A000);
-  static const Color stopRed = Color(0xFF6B1605);
+  static const Color stopRed = Color(0xFFD32F2F);
+
+  static const Color goodFill = Color(0xFF3D7A4E);
+  static const Color mixedFill = Color(0xFF9E4A4A);
+  static const Color badFill = Color(0xFF6B2C2C);
 
   static ThemeData get darkTheme {
     return ThemeData(

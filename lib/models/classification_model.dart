@@ -53,7 +53,6 @@ class RecommendationModel {
 class ConfigurationModel {
   final String id;
   final String defectId;
-  final String zoneId;
   final String qualityClass;
   final String outputId;
   final String preset;
@@ -63,7 +62,6 @@ class ConfigurationModel {
   const ConfigurationModel({
     required this.id,
     required this.defectId,
-    required this.zoneId,
     required this.qualityClass,
     required this.outputId,
     required this.preset,

@@ -1,6 +1,4 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../providers/configurator_provider.dart';
 
@@ -21,10 +19,11 @@ class _HistogramStepState extends State<HistogramStep> {
   @override
   Widget build(BuildContext context) {
     return Consumer<ConfiguratorProvider>(builder: (context, p, _) {
-      final definitions = p.definitions;
+      final defectIds = p.selectedDefectIds.toList()..sort();
 
-      if (_selectedDefectKey == null && definitions.isNotEmpty) {
-        _selectedDefectKey = definitions.first;
+      if (_selectedDefectKey == null && defectIds.isNotEmpty) {
+        _selectedDefectKey = defectIds.first;
+        p.setCurrentDefinition(_selectedDefectKey!);
       }
 
       if (_selectedDefectKey != null) {
@@ -40,7 +39,7 @@ class _HistogramStepState extends State<HistogramStep> {
       return Padding(
         padding: const EdgeInsets.all(12),
         child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          if (definitions.isNotEmpty)
+          if (defectIds.isNotEmpty)
             Container(
               width: 200,
               margin: const EdgeInsets.only(right: 12),
@@ -55,16 +54,18 @@ class _HistogramStepState extends State<HistogramStep> {
                   const SizedBox(height: 8),
                   Expanded(
                     child: ListView.builder(
-                      itemCount: definitions.length,
+                      itemCount: defectIds.length,
                       itemBuilder: (context, index) {
-                        final dk = definitions[index];
-                        final parts = dk.split('-');
+                        final id = defectIds[index];
                         final defectName =
-                            p.defects.firstWhere((d) => d.id == parts[0]).name;
-                        final isSelected = dk == currentKey;
+                            p.defects.firstWhere((d) => d.id == id).name;
+                        final isSelected = id == currentKey;
 
                         return GestureDetector(
-                          onTap: () => setState(() => _selectedDefectKey = dk),
+                          onTap: () {
+                            setState(() => _selectedDefectKey = id);
+                            p.setCurrentDefinition(id);
+                          },
                           child: Container(
                             margin: const EdgeInsets.only(bottom: 4),
                             padding: const EdgeInsets.symmetric(
@@ -93,22 +94,13 @@ class _HistogramStepState extends State<HistogramStep> {
                               ),
                               const SizedBox(width: 8),
                               Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(defectName,
-                                        style: TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w600,
-                                            color: isSelected
-                                                ? const Color(0xFF8DAA00)
-                                                : const Color(0xFFFFFFFF))),
-                                    Text(parts[1],
-                                        style: const TextStyle(
-                                            fontSize: 10,
-                                            color: Color(0xFFD8D8D8))),
-                                  ],
-                                ),
+                                child: Text(defectName,
+                                    style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                        color: isSelected
+                                            ? const Color(0xFF8DAA00)
+                                            : const Color(0xFFFFFFFF))),
                               ),
                             ]),
                           ),
@@ -128,7 +120,7 @@ class _HistogramStepState extends State<HistogramStep> {
               Row(children: [
                 Text(
                   currentKey != null
-                      ? 'Histogram: ${p.defects.firstWhere((d) => d.id == currentKey.split('-')[0]).name}'
+                      ? 'Histogram: ${p.defects.firstWhere((d) => d.id == currentKey).name}'
                       : 'Histogram',
                   style: const TextStyle(
                       fontSize: 20,
@@ -191,7 +183,9 @@ class _HistogramStepState extends State<HistogramStep> {
 
               // Histogram card
               Container(
-                height: 560,
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(context).size.height * 0.55,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFF26384F),
                   borderRadius: BorderRadius.circular(6),
@@ -366,6 +360,9 @@ class _DraggableBar extends StatefulWidget {
 class _DraggableBarState extends State<_DraggableBar> {
   double _currentFrequency = 0;
   bool _isDragging = false;
+  bool _isEditing = false;
+  final _editController = TextEditingController();
+  final _focusNode = FocusNode();
 
   String _formatNum(double value) {
     return value == value.toInt()
@@ -377,6 +374,16 @@ class _DraggableBarState extends State<_DraggableBar> {
   void initState() {
     super.initState();
     _currentFrequency = widget.frequency;
+    _focusNode.addListener(() {
+      if (!_focusNode.hasFocus && _isEditing) _commitEdit();
+    });
+  }
+
+  @override
+  void dispose() {
+    _editController.dispose();
+    _focusNode.dispose();
+    super.dispose();
   }
 
   @override
@@ -387,11 +394,33 @@ class _DraggableBarState extends State<_DraggableBar> {
     }
   }
 
+  void _startEditing() {
+    _editController.text = _formatNum(_currentFrequency);
+    setState(() => _isEditing = true);
+    WidgetsBinding.instance
+        .addPostFrameCallback((_) => _focusNode.requestFocus());
+  }
+
+  void _commitEdit() {
+    final v = double.tryParse(_editController.text);
+    if (v != null && v >= 0) {
+      final rounded = v.roundToDouble();
+      setState(() {
+        _currentFrequency = rounded;
+        _isEditing = false;
+      });
+      widget.onFrequencyChanged(rounded);
+    } else {
+      setState(() => _isEditing = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final available = (widget.maxBarHeight - 60).clamp(0, widget.maxBarHeight);
     final barHeight = widget.maxFrequency > 0
-        ? (_currentFrequency / widget.maxFrequency) * widget.maxBarHeight * 0.85
-        : 0;
+        ? (_currentFrequency / widget.maxFrequency) * available
+        : 0.0;
     final borderColor = const Color(0xFF8DAA00);
     final barBg = _isDragging
         ? const Color(0xFF8DAA00).withValues(alpha: 0.3)
@@ -403,25 +432,56 @@ class _DraggableBarState extends State<_DraggableBar> {
         final delta = -details.primaryDelta! * 0.5;
         final newValue = _currentFrequency + delta;
         setState(() {
-          _currentFrequency = newValue < 0 ? 0 : newValue;
+          _currentFrequency = newValue < 0 ? 0 : newValue.roundToDouble();
         });
         widget.onFrequencyChanged(_currentFrequency);
       },
       onVerticalDragEnd: (_) {
+        _currentFrequency = _currentFrequency.roundToDouble();
         setState(() => _isDragging = false);
         widget.onFrequencyChanged(_currentFrequency);
       },
       child: Column(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          Text(
-            _formatNum(_currentFrequency),
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFFFFFFFF),
-            ),
-          ),
+          _isEditing
+              ? SizedBox(
+                  width: 54,
+                  height: 24,
+                  child: TextField(
+                    controller: _editController,
+                    focusNode: _focusNode,
+                    keyboardType: TextInputType.number,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFFFFFFFF)),
+                    decoration: const InputDecoration(
+                      isDense: true,
+                      contentPadding:
+                          EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                      border: OutlineInputBorder(
+                          borderSide: BorderSide(color: Color(0xFF8DAA00))),
+                      enabledBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: Color(0xFF8DAA00))),
+                      focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: Color(0xFF8DAA00))),
+                    ),
+                    onSubmitted: (_) => _commitEdit(),
+                  ),
+                )
+              : GestureDetector(
+                  onTap: _startEditing,
+                  child: Text(
+                    _formatNum(_currentFrequency),
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFFFFFFFF),
+                    ),
+                  ),
+                ),
           const Icon(Icons.arrow_upward, size: 14, color: Color(0xFF8DAA00)),
           const SizedBox(height: 4),
           Container(

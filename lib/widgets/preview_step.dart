@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/configurator_provider.dart';
-import 'defect_image.dart';
 
 class PreviewStep extends StatefulWidget {
   const PreviewStep({super.key});
@@ -120,11 +119,6 @@ class _PreviewStepState extends State<PreviewStep> {
         : n == 2
             ? const Color(0xFFF5A000)
             : const Color(0xFF6B1605);
-    final label = n == 1
-        ? 'Good'
-        : n == 2
-            ? 'Slightly Bad'
-            : 'Bad';
     final expanded = _expanded.contains(n);
 
     return Container(
@@ -214,15 +208,7 @@ class _PreviewStepState extends State<PreviewStep> {
   }
 
   Widget _defRow(String dk, ConfiguratorProvider p) {
-    final parts = dk.split('-');
-    final d = p.defects.firstWhere((x) => x.id == parts[0]);
-    final z = p.zones.firstWhere((x) => x.id == parts[1]);
-    final grade = p.gradeFor(dk);
-    final gColor = grade == 'Good'
-        ? const Color(0xFF8DAA00)
-        : grade == 'Slightly Bad'
-            ? const Color(0xFFF5A000)
-            : const Color(0xFF6B1605);
+    final tokens = dk.split('|');
     return Padding(
       padding: const EdgeInsets.only(bottom: 3),
       child: Container(
@@ -230,26 +216,22 @@ class _PreviewStepState extends State<PreviewStep> {
         decoration: BoxDecoration(
             color: const Color(0xFF4A4A4A),
             borderRadius: BorderRadius.circular(5),
-            border: Border(left: BorderSide(color: gColor, width: 2))),
+            border: Border(
+                left: BorderSide(color: const Color(0xFF8DAA00), width: 2))),
         child: Row(children: [
-          SizedBox(
-              width: 22,
-              height: 22,
-              child: DefectImage(defectId: d.id, size: 22)),
-          const SizedBox(width: 8),
           Expanded(
-              child: Text('${d.name} @ ${z.name}',
+              child: Text(p.comboLabel(dk),
                   style: const TextStyle(fontSize: 16, color: Colors.white))),
           Container(
               padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
               decoration: BoxDecoration(
                   color: const Color(0xFF4A4A4A).withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(3)),
-              child: Text(grade ?? '--',
-                  style: TextStyle(
+              child: Text(tokens.length.toString(),
+                  style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: gColor))),
+                      color: Color(0xFF8DAA00)))),
         ]),
       ),
     );

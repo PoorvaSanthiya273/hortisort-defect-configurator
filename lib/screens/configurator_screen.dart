@@ -26,7 +26,6 @@ class _ConfiguratorScreenState extends State<ConfiguratorScreen> {
     'Outlet Assignment',
     'Review & Save'
   ];
-
   static const _totalSteps = 4;
 
   @override
@@ -36,11 +35,17 @@ class _ConfiguratorScreenState extends State<ConfiguratorScreen> {
         return Scaffold(
           backgroundColor: AppTheme.mainBg,
           body: SafeArea(
-            child: Column(
-              children: [
-                _topBar(context, p),
-                Expanded(child: _stepContent()),
-              ],
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final w = constraints.maxWidth;
+                final narrow = w < 768;
+                return Column(
+                  children: [
+                    _topBar(context, p, narrow),
+                    Expanded(child: _stepContent()),
+                  ],
+                );
+              },
             ),
           ),
         );
@@ -48,39 +53,44 @@ class _ConfiguratorScreenState extends State<ConfiguratorScreen> {
     );
   }
 
-  Widget _topBar(BuildContext context, ConfiguratorProvider p) {
+  Widget _topBar(BuildContext context, ConfiguratorProvider p, bool narrow) {
+    final h = narrow ? 60.0 : 76.0;
+    final logoH = narrow ? 28.0 : 36.0;
+    final gap = narrow ? 6.0 : 20.0;
     return Container(
-      height: 76,
-      padding: const EdgeInsets.only(left: 28, right: 16, top: 6, bottom: 4),
-      decoration: const BoxDecoration(
-        color: AppTheme.headerBg,
-      ),
+      height: h,
+      padding: EdgeInsets.only(
+          left: narrow ? 12 : 28, right: narrow ? 8 : 16, top: 6, bottom: 4),
+      decoration: const BoxDecoration(color: AppTheme.headerBg),
       child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
-        SvgPicture.asset('assets/logo.svg', height: 36),
-        const SizedBox(width: 6),
-        const Text('HORTISORT',
-            style: TextStyle(
-                color: Color(0xFFFFFFFF),
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 3)),
-        const SizedBox(width: 20),
+        SvgPicture.asset('assets/logo.svg', height: logoH),
+        if (!narrow) const SizedBox(width: 6),
+        if (!narrow)
+          const Text('HORTISORT',
+              style: TextStyle(
+                  color: Color(0xFFFFFFFF),
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 3)),
+        SizedBox(width: gap),
         Expanded(
             child: StepIndicator(
                 current: _currentStep,
                 total: _totalSteps,
                 labels: _labels,
                 onStepTap: (step) {
-                  if (step <= _currentStep) {
-                    setState(() => _currentStep = step);
-                  }
+                  if (step <= _currentStep) setState(() => _currentStep = step);
                 })),
-        const SizedBox(width: 14),
-        _navBtn('< Back', _currentStep > 0, () {
-          setState(() => _currentStep--);
-        }),
-        const SizedBox(width: 10),
-        _navBtn(_currentStep == 3 ? 'Save' : 'Next >', _nextEnabled(p), () {
+        const SizedBox(width: 8),
+        if (!narrow)
+          _navBtn(
+              '< Back', _currentStep > 0, () => setState(() => _currentStep--)),
+        if (!narrow) const SizedBox(width: 6),
+        _navBtn(
+            narrow
+                ? (_currentStep == 3 ? 'S' : '>')
+                : (_currentStep == 3 ? 'Save' : 'Next >'),
+            _nextEnabled(p), () {
           if (_currentStep == 3) {
             Provider.of<ConfiguratorProvider>(context, listen: false)
                 .saveConfiguration();
@@ -88,29 +98,8 @@ class _ConfiguratorScreenState extends State<ConfiguratorScreen> {
             setState(() => _currentStep++);
           }
         }),
-        const SizedBox(width: 14),
+        const SizedBox(width: 8),
         const LoginDropdown(),
-      ]),
-    );
-  }
-
-  Widget _bottomBar(ConfiguratorProvider p) {
-    return Container(
-      height: 48,
-      color: AppTheme.orangeBar,
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Row(children: [
-        const Text('Program: Defect Config',
-            style: TextStyle(
-                color: AppTheme.primaryText,
-                fontSize: 14,
-                fontWeight: FontWeight.w600)),
-        const Spacer(),
-        Text('Step ${_currentStep + 1} of $_totalSteps',
-            style: const TextStyle(
-                color: AppTheme.primaryText,
-                fontSize: 14,
-                fontWeight: FontWeight.w600)),
       ]),
     );
   }
@@ -121,7 +110,7 @@ class _ConfiguratorScreenState extends State<ConfiguratorScreen> {
       child: TextButton(
           onPressed: enabled ? onTap : null,
           style: TextButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 0),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
               backgroundColor: enabled
                   ? AppTheme.darkGrey
                   : AppTheme.darkGrey.withValues(alpha: 0.5),

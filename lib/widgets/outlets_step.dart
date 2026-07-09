@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/configurator_provider.dart';
+import '../theme/app_theme.dart';
+import 'touch_feedback.dart';
 
 class OutletsStep extends StatefulWidget {
   const OutletsStep({super.key});
@@ -15,12 +17,8 @@ class _OutletsStepState extends State<OutletsStep> {
   @override
   Widget build(BuildContext context) {
     return Consumer<ConfiguratorProvider>(builder: (context, p, _) {
-      if (p.assignedGradeCount < p.definitions.length &&
-          p.definitions.isNotEmpty) {
-        WidgetsBinding.instance
-            .addPostFrameCallback((_) => p.autoAssignGrades());
-      }
-      return Padding(
+      return Container(
+        color: AppTheme.mainBg,
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
         child: Column(children: [
           if (!_warningDismissed && p.validationWarnings.isNotEmpty)
@@ -28,12 +26,12 @@ class _OutletsStepState extends State<OutletsStep> {
               margin: const EdgeInsets.only(bottom: 8),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                  color: const Color(0xFF4A4A4A),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: const Color(0xFFF5A000))),
+                  color: AppTheme.darkGrey,
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(color: AppTheme.orangeBar)),
               child: Row(children: [
                 const Icon(Icons.warning_amber,
-                    color: Color(0xFFF5A000), size: 18),
+                    color: AppTheme.orangeBar, size: 22),
                 const SizedBox(width: 8),
                 Expanded(
                     child: Text(p.validationWarnings.join(' · '),
@@ -48,7 +46,6 @@ class _OutletsStepState extends State<OutletsStep> {
                                 fontSize: 14, color: Color(0xFFD8D8D8))))),
               ]),
             ),
-          _summaryStats(p),
           const SizedBox(height: 12),
           Expanded(
               child:
@@ -64,74 +61,38 @@ class _OutletsStepState extends State<OutletsStep> {
     });
   }
 
-  Widget _summaryStats(ConfiguratorProvider p) {
-    return Row(children: [
-      _statCard(
-          'Total', p.totalCombinations.toString(), const Color(0xFFFFFFFF)),
-      _statCard('Good', p.goodCount.toString(), const Color(0xFF8DAA00)),
-      _statCard('Slightly Bad', p.sbCount.toString(), const Color(0xFFF5A000)),
-      _statCard('Bad', p.badCount.toString(), const Color(0xFF6B1605)),
-      _statCard(
-          'Configured', p.configuredCount.toString(), const Color(0xFF8DAA00)),
-      _statCard('Pending', p.pendingCount.toString(), const Color(0xFFF5A000)),
-    ]);
-  }
-
-  Widget _statCard(String label, String value, Color c) {
-    return Expanded(
-        child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 4),
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            decoration: BoxDecoration(
-                color: const Color(0xFF4A4A4A),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: const Color(0xFF4A4A4A))),
-            child: Column(children: [
-              Text(value,
-                  style: TextStyle(
-                      color: c, fontSize: 22, fontWeight: FontWeight.w700)),
-              Text(label,
-                  style: const TextStyle(color: Colors.white, fontSize: 14))
-            ])));
-  }
-
   Widget _filters(ConfiguratorProvider p) {
     return Container(
       width: 200,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-          color: const Color(0xFF26384F),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: const Color(0xFF26384F))),
+          color: AppTheme.panelBg,
+          borderRadius: BorderRadius.circular(4),
+          border: Border.all(color: AppTheme.darkGrey)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const Text('Filters',
-            style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-                color: Colors.white)),
-        const SizedBox(height: 10),
+        _sectionTitle(Icons.filter_list, 'Filters'),
+        const SizedBox(height: 12),
         SizedBox(
-            height: 36,
+            height: 40,
             child: TextField(
                 onChanged: (v) => p.setSearchQuery(v),
-                style: const TextStyle(fontSize: 16, color: Colors.white),
+                style:
+                    const TextStyle(fontSize: 15, color: AppTheme.primaryText),
                 decoration: InputDecoration(
                     hintText: 'Search...',
-                    hintStyle: const TextStyle(color: Color(0xFFD8D8D8)),
+                    hintStyle: const TextStyle(color: AppTheme.secondaryText),
                     prefixIcon: const Icon(Icons.search,
-                        size: 18, color: Color(0xFFD8D8D8)),
+                        size: 18, color: AppTheme.secondaryText),
                     filled: true,
-                    fillColor: const Color(0xFF4A4A4A),
+                    fillColor: AppTheme.darkGrey,
                     contentPadding: const EdgeInsets.symmetric(horizontal: 8),
                     border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(6),
+                        borderRadius: BorderRadius.circular(4),
                         borderSide: BorderSide.none)))),
-        const SizedBox(height: 10),
+        const SizedBox(height: 12),
         _dd('Defect', p.filterDefect, p.defects.map((d) => d.id).toList(),
             (v) => p.setFilterDefect(v ?? 'all')),
-        _dd('Zone', p.filterZone, p.zones.map((z) => z.id).toList(),
-            (v) => p.setFilterZone(v ?? 'all')),
-        _dd('Grade', p.filterGrade, ['Good', 'Slightly Bad', 'Bad'],
+        _dd('Grade', p.filterGrade, ['Good', 'Mixed', 'Bad'],
             (v) => p.setFilterGrade(v ?? 'all')),
         _dd(
             'Outlet',
@@ -142,19 +103,27 @@ class _OutletsStepState extends State<OutletsStep> {
         _dd('Status', p.filterStatus, ['Configured', 'Pending'],
             (v) => p.setFilterStatus(v ?? 'all')),
         const Spacer(),
-        GestureDetector(
+        TouchFeedback(
             onTap: () => p.clearAllFilters(),
             child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 7),
+                height: 42,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: const Color(0xFF4A4A4A))),
-                child: const Text('Clear Filters',
-                    style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600)))),
+                    color: AppTheme.darkGrey,
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: AppTheme.darkGrey)),
+                child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.clear_all,
+                          size: 18, color: AppTheme.primaryText),
+                      SizedBox(width: 6),
+                      Text('Clear Filters',
+                          style: TextStyle(
+                              fontSize: 15,
+                              color: AppTheme.primaryText,
+                              fontWeight: FontWeight.w600))
+                    ]))),
       ]),
     );
   }
@@ -162,28 +131,32 @@ class _OutletsStepState extends State<OutletsStep> {
   Widget _dd(String label, String value, List<String> items,
       Function(String?) onChange) {
     return Padding(
-        padding: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.only(bottom: 10),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(label,
-              style: const TextStyle(fontSize: 14, color: Color(0xFFD8D8D8))),
-          const SizedBox(height: 2),
+              style:
+                  const TextStyle(fontSize: 13, color: AppTheme.secondaryText)),
+          const SizedBox(height: 4),
           Container(
-              height: 36,
-              padding: const EdgeInsets.symmetric(horizontal: 8),
+              height: 40,
+              padding: const EdgeInsets.symmetric(horizontal: 10),
               decoration: BoxDecoration(
-                  color: const Color(0xFF4A4A4A),
-                  borderRadius: BorderRadius.circular(6)),
+                  color: AppTheme.darkGrey,
+                  borderRadius: BorderRadius.circular(4)),
               child: DropdownButtonHideUnderline(
                   child: DropdownButton<String>(
                       value: value,
                       isExpanded: true,
-                      style: const TextStyle(fontSize: 16, color: Colors.white),
-                      dropdownColor: const Color(0xFF4A4A4A),
+                      style: const TextStyle(
+                          fontSize: 15, color: AppTheme.primaryText),
+                      dropdownColor: AppTheme.darkGrey,
+                      iconEnabledColor: AppTheme.primaryText,
                       items: [
                             const DropdownMenuItem(
                                 value: 'all',
                                 child: Text('All',
-                                    style: TextStyle(color: Colors.white)))
+                                    style:
+                                        TextStyle(color: AppTheme.primaryText)))
                           ] +
                           items
                               .map((i) =>
@@ -201,18 +174,17 @@ class _OutletsStepState extends State<OutletsStep> {
               style: TextStyle(color: Color(0xFFD8D8D8), fontSize: 16)));
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Row(children: [
-        Text('${defs.length} of ${p.definitions.length} combinations',
-            style: const TextStyle(fontSize: 16, color: Colors.white)),
+        _sectionTitle(Icons.table_rows, 'Combination Mapping'),
+        const SizedBox(width: 12),
+        Text('${defs.length} of ${p.definitions.length}',
+            style: const TextStyle(
+                fontSize: 15,
+                color: AppTheme.secondaryText,
+                fontWeight: FontWeight.w600)),
         const Spacer(),
-        _btn('Auto Assign', () {
-          p.autoAssignGrades();
-          p.autoAssignCombos();
-        }),
+        _btn('Auto Assign', Icons.auto_fix_high, () => p.autoAssignCombos()),
         const SizedBox(width: 6),
-        _btn('Reset', () {
-          p.resetGrades();
-          p.resetCombos();
-        }, outlined: true),
+        _btn('Reset', Icons.restart_alt, () => p.resetCombos(), outlined: true),
         const SizedBox(width: 6),
       ]),
       const SizedBox(height: 8),
@@ -262,45 +234,30 @@ class _OutletsStepState extends State<OutletsStep> {
       Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
-              color: const Color(0xFF26384F),
-              borderRadius: BorderRadius.circular(6)),
+              color: AppTheme.darkGrey, borderRadius: BorderRadius.circular(4)),
           child: const Row(children: [
             SizedBox(width: 28),
             Expanded(
-                flex: 3,
-                child: Text('Defect',
+                flex: 4,
+                child: Text('Combination',
                     style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFFD8D8D8)))),
-            Expanded(
-                flex: 1,
-                child: Text('Zone',
-                    style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFFD8D8D8)))),
-            Expanded(
-                flex: 2,
-                child: Text('Grade',
-                    style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFFD8D8D8)))),
+                        color: AppTheme.secondaryText))),
             Expanded(
                 flex: 2,
                 child: Text('Outlet',
                     style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFFD8D8D8)))),
+                        color: AppTheme.secondaryText))),
             Expanded(
                 flex: 2,
                 child: Text('Status',
                     style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFFD8D8D8)))),
+                        color: AppTheme.secondaryText))),
           ])),
       const SizedBox(height: 4),
       Expanded(
@@ -308,15 +265,14 @@ class _OutletsStepState extends State<OutletsStep> {
           children: defs.asMap().entries.map((entry) {
             final index = entry.key;
             final dk = entry.value;
-            final parts = dk.split('-');
-            final d = p.defects.firstWhere((x) => x.id == parts[0]);
-            final z = p.zones.firstWhere((x) => x.id == parts[1]);
-            final grade = p.gradeFor(dk);
-            final gColor = grade == 'Good'
-                ? const Color(0xFF8DAA00)
-                : grade == 'Slightly Bad'
-                    ? const Color(0xFFF5A000)
-                    : const Color(0xFF6B1605);
+            final tokens = dk.split('|');
+            final allGood = tokens.every((t) => t.endsWith('=Good'));
+            final allBad = tokens.every((t) => t.endsWith('=Bad'));
+            final gColor = allGood
+                ? AppTheme.greenHighlight
+                : allBad
+                    ? AppTheme.stopRed
+                    : AppTheme.orangeBar;
             final outlets = <int>[];
             if (p.isComboInOutlet(dk, 1)) outlets.add(1);
             if (p.isComboInOutlet(dk, 2)) outlets.add(2);
@@ -334,7 +290,7 @@ class _OutletsStepState extends State<OutletsStep> {
                         decoration: BoxDecoration(
                             color: gColor,
                             borderRadius: BorderRadius.circular(6)),
-                        child: Text('${d.name} @ ${z.name}',
+                        child: Text(p.comboLabel(dk),
                             style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 14,
@@ -342,9 +298,8 @@ class _OutletsStepState extends State<OutletsStep> {
                 childWhenDragging: Opacity(
                     opacity: 0.3,
                     child: _tableRow(
-                        dk, d, z, grade, gColor, outlets, status, p, index)),
-                child: _tableRow(
-                    dk, d, z, grade, gColor, outlets, status, p, index),
+                        dk, tokens, gColor, outlets, status, p, index)),
+                child: _tableRow(dk, tokens, gColor, outlets, status, p, index),
               ),
             );
           }).toList(),
@@ -353,22 +308,26 @@ class _OutletsStepState extends State<OutletsStep> {
     ]);
   }
 
-  Widget _btn(String label, VoidCallback onTap, {bool outlined = false}) {
-    return GestureDetector(
+  Widget _btn(String label, IconData icon, VoidCallback onTap,
+      {bool outlined = false}) {
+    return TouchFeedback(
         onTap: onTap,
         child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+            height: 38,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
             decoration: BoxDecoration(
-                color: outlined ? Colors.transparent : const Color(0xFF4A4A4A),
-                border: outlined
-                    ? Border.all(color: const Color(0xFF4A4A4A))
-                    : null,
-                borderRadius: BorderRadius.zero),
-            child: Text(label,
-                style: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600))));
+                color: outlined ? Colors.transparent : AppTheme.darkGrey,
+                border: Border.all(color: AppTheme.darkGrey),
+                borderRadius: BorderRadius.circular(4)),
+            child: Row(mainAxisSize: MainAxisSize.min, children: [
+              Icon(icon, size: 17, color: AppTheme.primaryText),
+              const SizedBox(width: 6),
+              Text(label,
+                  style: const TextStyle(
+                      fontSize: 15,
+                      color: AppTheme.primaryText,
+                      fontWeight: FontWeight.w700))
+            ])));
   }
 
   Widget _assignDropdown(ConfiguratorProvider p) {
@@ -376,22 +335,24 @@ class _OutletsStepState extends State<OutletsStep> {
       height: 36,
       padding: const EdgeInsets.symmetric(horizontal: 10),
       decoration: BoxDecoration(
-          color: const Color(0xFF26384F),
+          color: AppTheme.panelBg,
           borderRadius: BorderRadius.circular(4),
-          border: Border.all(color: const Color(0xFF8DAA00))),
+          border: Border.all(color: AppTheme.greenHighlight)),
       child: DropdownButtonHideUnderline(
           child: DropdownButton<int>(
               value: null,
               hint: const Text('Outlet',
-                  style: TextStyle(fontSize: 14, color: Color(0xFF8DAA00))),
-              dropdownColor: const Color(0xFF26384F),
-              style: const TextStyle(fontSize: 14, color: Color(0xFFFFFFFF)),
+                  style:
+                      TextStyle(fontSize: 15, color: AppTheme.greenHighlight)),
+              dropdownColor: AppTheme.panelBg,
+              iconEnabledColor: AppTheme.greenHighlight,
+              style: const TextStyle(fontSize: 15, color: AppTheme.primaryText),
               items: [1, 2, 3].map((n) {
                 final c = n == 1
-                    ? const Color(0xFF8DAA00)
+                    ? AppTheme.greenHighlight
                     : n == 2
-                        ? const Color(0xFFF5A000)
-                        : const Color(0xFF6B1605);
+                        ? AppTheme.orangeBar
+                        : AppTheme.stopRed;
                 return DropdownMenuItem<int>(
                     value: n,
                     child: Row(mainAxisSize: MainAxisSize.min, children: [
@@ -414,7 +375,7 @@ class _OutletsStepState extends State<OutletsStep> {
     );
   }
 
-  Widget _tableRow(String dk, d, z, String? grade, Color gColor,
+  Widget _tableRow(String dk, List<String> tokens, Color gColor,
       List<int> outlets, String status, ConfiguratorProvider p, int index) {
     final sel = p.selectedForAssign.contains(dk);
     final rowBg =
@@ -423,7 +384,7 @@ class _OutletsStepState extends State<OutletsStep> {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       decoration: BoxDecoration(
           color: rowBg,
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(4),
           border: Border(left: BorderSide(color: gColor, width: 3))),
       child: Row(children: [
         GestureDetector(
@@ -433,36 +394,39 @@ class _OutletsStepState extends State<OutletsStep> {
               height: 18,
               decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: sel ? const Color(0xFF8DAA00) : Colors.transparent,
+                  color: sel ? AppTheme.greenHighlight : Colors.transparent,
                   border: Border.all(
-                      color: sel ? const Color(0xFF8DAA00) : Colors.white,
+                      color:
+                          sel ? AppTheme.greenHighlight : AppTheme.primaryText,
                       width: 2)),
               child: sel
-                  ? const Icon(Icons.check, size: 10, color: Colors.white)
+                  ? const Icon(Icons.check,
+                      size: 10, color: AppTheme.primaryText)
                   : null),
         ),
         const SizedBox(width: 8),
         Expanded(
-            flex: 3,
-            child: Text(d.name,
-                style: const TextStyle(fontSize: 16, color: Colors.white))),
-        Expanded(
-            flex: 1,
-            child: Text(z.name,
-                style:
-                    const TextStyle(fontSize: 16, color: Color(0xFFD8D8D8)))),
-        Expanded(
-            flex: 2,
-            child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                    color: const Color(0xFF4A4A4A),
-                    borderRadius: BorderRadius.circular(4)),
-                child: Text(grade ?? '--',
-                    style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: gColor)))),
+            flex: 4,
+            child: Wrap(
+                spacing: 6,
+                runSpacing: 4,
+                children: tokens.map((t) {
+                  final pts = t.split('=');
+                  final d = p.defects.firstWhere((x) => x.id == pts[0]);
+                  final isG = pts[1] == 'Good';
+                  final fill = isG ? AppTheme.goodFill : AppTheme.badFill;
+                  return Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                        color: fill, borderRadius: BorderRadius.circular(4)),
+                    child: Text('${d.name}: ${pts[1]}',
+                        style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white)),
+                  );
+                }).toList())),
         Expanded(
             flex: 2,
             child: outlets.isEmpty
@@ -485,7 +449,7 @@ class _OutletsStepState extends State<OutletsStep> {
                                         ? const Color(0xFF8DAA00)
                                         : o == 2
                                             ? const Color(0xFFF5A000)
-                                            : const Color(0xFF6B1605),
+                                            : AppTheme.badFill,
                                     fontWeight: FontWeight.w600))))
                         .toList())),
         Expanded(flex: 2, child: _statusBadge(status)),
@@ -496,27 +460,26 @@ class _OutletsStepState extends State<OutletsStep> {
   }
 
   Widget _statusBadge(String status) {
-    Color c = status == 'Configured'
-        ? const Color(0xFF8DAA00)
+    final fill = status == 'Configured'
+        ? AppTheme.goodFill
         : status == 'Pending'
-            ? const Color(0xFFF5A000)
-            : const Color(0xFF6B1605);
+            ? AppTheme.mixedFill
+            : AppTheme.badFill;
     return Container(
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-        decoration: BoxDecoration(
-            color: const Color(0xFF4A4A4A),
-            borderRadius: BorderRadius.circular(4)),
+        decoration:
+            BoxDecoration(color: fill, borderRadius: BorderRadius.circular(4)),
         child: Text(status,
-            style: TextStyle(
-                fontSize: 14, fontWeight: FontWeight.w600, color: c)));
+            style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Colors.white)));
   }
 
   Widget _outletQueues(ConfiguratorProvider p) {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      const Text('Outlet Queues',
-          style: TextStyle(
-              fontSize: 20, fontWeight: FontWeight.w700, color: Colors.white)),
-      const SizedBox(height: 8),
+      _sectionTitle(Icons.output, 'Outlets'),
+      const SizedBox(height: 10),
       Expanded(
           child:
               ListView(children: [1, 2, 3].map((n) => _queue(n, p)).toList())),
@@ -526,10 +489,10 @@ class _OutletsStepState extends State<OutletsStep> {
   Widget _queue(int n, ConfiguratorProvider p) {
     final combos = p.combosForOutlet(n);
     final borderColor = n == 1
-        ? const Color(0xFF8DAA00)
+        ? AppTheme.greenHighlight
         : n == 2
-            ? const Color(0xFFF5A000)
-            : const Color(0xFF6B1605);
+            ? AppTheme.orangeBar
+            : AppTheme.stopRed;
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: DragTarget<String>(
@@ -540,8 +503,8 @@ class _OutletsStepState extends State<OutletsStep> {
           return Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-                color: const Color(0xFF26384F),
-                borderRadius: BorderRadius.circular(10),
+                color: AppTheme.panelBg,
+                borderRadius: BorderRadius.circular(4),
                 border: Border.all(color: borderColor, width: hover ? 2 : 1)),
             child:
                 Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -550,18 +513,19 @@ class _OutletsStepState extends State<OutletsStep> {
                     width: 30,
                     height: 30,
                     decoration: BoxDecoration(
-                        color: const Color(0xFF4A4A4A),
-                        borderRadius: BorderRadius.circular(5)),
+                        color: AppTheme.darkGrey,
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(color: borderColor)),
                     child: Center(
                         child: Text('0$n',
                             style: const TextStyle(
-                                color: Colors.white,
+                                color: AppTheme.primaryText,
                                 fontSize: 20,
                                 fontWeight: FontWeight.w800)))),
                 const SizedBox(width: 8),
                 Text('Outlet $n',
                     style: const TextStyle(
-                        color: Colors.white,
+                        color: AppTheme.primaryText,
                         fontSize: 18,
                         fontWeight: FontWeight.w600)),
                 const Spacer(),
@@ -569,11 +533,11 @@ class _OutletsStepState extends State<OutletsStep> {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
-                        color: const Color(0xFF4A4A4A),
+                        color: AppTheme.darkGrey,
                         borderRadius: BorderRadius.circular(4)),
                     child: Text('${combos.length}',
                         style: const TextStyle(
-                            color: Colors.white,
+                            color: AppTheme.primaryText,
                             fontSize: 14,
                             fontWeight: FontWeight.w600))),
               ]),
@@ -596,31 +560,63 @@ class _OutletsStepState extends State<OutletsStep> {
   }
 
   Widget _queueItem(String dk, int n, ConfiguratorProvider p) {
-    final parts = dk.split('-');
-    final d = p.defects.firstWhere((x) => x.id == parts[0]);
-    final z = p.zones.firstWhere((x) => x.id == parts[1]);
+    final tokens = dk.split('|');
     final borderColor = n == 1
-        ? const Color(0xFF8DAA00)
+        ? AppTheme.greenHighlight
         : n == 2
-            ? const Color(0xFFF5A000)
-            : const Color(0xFF6B1605);
+            ? AppTheme.orangeBar
+            : AppTheme.badFill;
     return Padding(
         padding: const EdgeInsets.only(bottom: 3),
         child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
             decoration: BoxDecoration(
-                color: const Color(0xFF4A4A4A),
+                color: const Color(0xFF243447),
                 borderRadius: BorderRadius.circular(5),
                 border: Border(left: BorderSide(color: borderColor, width: 2))),
             child: Row(children: [
               Expanded(
-                  child: Text('${d.name} @ ${z.name}',
-                      style:
-                          const TextStyle(fontSize: 16, color: Colors.white))),
+                  child: Wrap(
+                      spacing: 4,
+                      runSpacing: 2,
+                      children: tokens.map((t) {
+                        final pts = t.split('=');
+                        final d = p.defects.firstWhere((x) => x.id == pts[0]);
+                        final isG = pts[1] == 'Good';
+                        final fill = isG ? AppTheme.goodFill : AppTheme.badFill;
+                        return Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 5, vertical: 1),
+                          decoration: BoxDecoration(
+                              color: fill,
+                              borderRadius: BorderRadius.circular(3)),
+                          child: Text('${d.name}: ${pts[1]}',
+                              style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white)),
+                        );
+                      }).toList())),
               GestureDetector(
                   onTap: () => p.removeComboFromOutlet(dk, n),
                   child:
                       const Icon(Icons.close, size: 16, color: Colors.white)),
             ])));
+  }
+
+  Widget _sectionTitle(IconData icon, String text) {
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Row(children: [
+        Icon(icon, color: AppTheme.primaryText, size: 22),
+        const SizedBox(width: 8),
+        Text(text,
+            style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+                color: AppTheme.primaryText)),
+      ]),
+      const SizedBox(height: 6),
+      Container(height: 2, width: 96, color: AppTheme.greenHighlight),
+    ]);
   }
 }
