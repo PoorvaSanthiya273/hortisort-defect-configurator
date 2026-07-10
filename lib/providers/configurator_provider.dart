@@ -20,6 +20,7 @@ class ConfiguratorProvider extends ChangeNotifier {
   double _histogramMin = 0;
   double _histogramMax = 120;
   int _histogramNoOfBands = 10;
+  final Set<String> _savedDefects = {};
   // Per-defect frequencies: defectId → {bandIndex: frequency}
   final Map<String, Map<int, double>> _defectFrequencies = {};
 
@@ -27,6 +28,9 @@ class ConfiguratorProvider extends ChangeNotifier {
   double get histogramMax => _histogramMax;
   int get histogramNoOfBands => _histogramNoOfBands;
   double get bandSize => (_histogramMax - _histogramMin) / _histogramNoOfBands;
+  bool get canProceedFromHistogram =>
+      _selectedDefectIds.isEmpty ||
+      _selectedDefectIds.every((id) => _savedDefects.contains(id));
 
   List<String> get bandLabels {
     final _fmt = (double v) =>
@@ -54,6 +58,7 @@ class ConfiguratorProvider extends ChangeNotifier {
   void setBandFrequency(String defectKey, int index, double value) {
     _defectFrequencies.putIfAbsent(defectKey, () => {});
     _defectFrequencies[defectKey]![index] = value < 0 ? 0.0 : value;
+    _savedDefects.remove(defectKey);
     _isSaved = false;
     notifyListeners();
   }
@@ -70,15 +75,20 @@ class ConfiguratorProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void markAllDefectsSaved() {
+    _savedDefects.addAll(_selectedDefectIds);
+    notifyListeners();
+  }
+
   void resetDefectFrequencies(String defectKey) {
     _defectFrequencies[defectKey]?.clear();
+    _savedDefects.remove(defectKey);
     _isSaved = false;
     notifyListeners();
   }
 
   Future<void> saveHistogramConfig() async {
-    // In a real app, this would write to a file or API
-    // For now, we just mark as saved
+    if (_currentDefKey != null) _savedDefects.add(_currentDefKey!);
     _isSaved = true;
     notifyListeners();
   }
@@ -446,7 +456,7 @@ class ConfiguratorProvider extends ChangeNotifier {
   String? _activeCategory;
   String _statusFilter = 'All';
   String _sortBy = 'Name';
-  bool _filterExpanded = false;
+  bool _filterExpanded = true;
   String get searchQuery => _searchQuery;
   String? get activeCategory => _activeCategory;
   String get statusFilter => _statusFilter;

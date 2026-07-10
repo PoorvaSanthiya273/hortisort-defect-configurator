@@ -7,25 +7,17 @@ import 'touch_feedback.dart';
 class DefectsStep extends StatelessWidget {
   const DefectsStep({super.key});
 
-  static const _categories = [
-    'All',
-    'Color Defect',
-    'Surface Defect',
-    'Decay / Damage',
-    'Shape Defect',
-    'Foreign Material'
-  ];
-
   @override
   Widget build(BuildContext context) {
     return Consumer<ConfiguratorProvider>(builder: (context, p, _) {
       return Padding(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
         child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Container(
-              width: 220,
-              margin: const EdgeInsets.only(right: 8),
-              child: p.filterExpanded ? _filterPanel(p) : _filterToggle(p)),
+          p.filterExpanded
+              ? SizedBox(
+                  width: 180, child: SizedBox.expand(child: _filterPanel(p)))
+              : _filterToggle(p),
+          const SizedBox(width: 8),
           Expanded(child: _mainContent(p)),
         ]),
       );
@@ -33,25 +25,19 @@ class DefectsStep extends StatelessWidget {
   }
 
   Widget _filterToggle(ConfiguratorProvider p) {
-    return Container(
-      margin: const EdgeInsets.only(right: 8),
-      child: TouchFeedback(
-        onTap: () => p.toggleFilterPanel(),
+    return TouchFeedback(
+      onTap: () => p.toggleFilterPanel(),
+      child: Tooltip(
+        message: 'Filters',
         child: Container(
-          padding: const EdgeInsets.all(10),
+          width: 28,
+          height: 28,
           decoration: BoxDecoration(
               color: const Color(0xFF26384F),
-              borderRadius: BorderRadius.circular(6),
+              borderRadius: BorderRadius.circular(4),
               border: Border.all(color: const Color(0xFF4A4A4A))),
-          child: const Column(mainAxisSize: MainAxisSize.min, children: [
-            Icon(Icons.filter_list, size: 20, color: Color(0xFFD8D8D8)),
-            SizedBox(height: 4),
-            Text('Filters',
-                style: TextStyle(
-                    fontSize: 14,
-                    color: Color(0xFFD8D8D8),
-                    fontWeight: FontWeight.w600))
-          ]),
+          child:
+              const Icon(Icons.filter_list, size: 16, color: Color(0xFFD8D8D8)),
         ),
       ),
     );
@@ -59,172 +45,133 @@ class DefectsStep extends StatelessWidget {
 
   Widget _filterPanel(ConfiguratorProvider p) {
     return Container(
-      width: 220,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
           color: const Color(0xFF26384F),
           borderRadius: BorderRadius.circular(6),
           border: Border.all(color: const Color(0xFF4A4A4A))),
-      child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(children: [
-              const Icon(Icons.filter_list, size: 16, color: Color(0xFFD8D8D8)),
-              const SizedBox(width: 8),
-              const Expanded(
-                  child: Text('Filters',
-                      style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFFFFFFFF)))),
-              TouchFeedback(
-                  borderRadius: 6,
-                  onTap: () => p.toggleFilterPanel(),
-                  child: Container(
-                      width: 28,
-                      height: 28,
-                      padding: const EdgeInsets.all(0),
-                      decoration: BoxDecoration(
-                          color: const Color(0xFF4A4A4A),
-                          borderRadius: BorderRadius.circular(6)),
-                      child: const Icon(Icons.close,
-                          size: 14, color: Color(0xFFD8D8D8)))),
-            ]),
-            const SizedBox(height: 16),
-            SizedBox(
-                height: 36,
-                child: TextField(
-                    onChanged: (v) => p.setSearchQuery(v),
-                    style:
-                        const TextStyle(fontSize: 13, color: Color(0xFFFFFFFF)),
-                    decoration: InputDecoration(
-                        hintText: 'Search Defects',
-                        hintStyle: const TextStyle(color: Color(0xFFD8D8D8)),
-                        prefixIcon: const Icon(Icons.search,
-                            size: 18, color: Color(0xFFD8D8D8)),
-                        filled: true,
-                        fillColor: const Color(0xFF4A4A4A),
-                        contentPadding:
-                            const EdgeInsets.symmetric(horizontal: 10),
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(6),
-                            borderSide: BorderSide.none)))),
-            const SizedBox(height: 12),
-            _dd('Defect Type', p.activeCategory ?? 'All', _categories,
-                (v) => p.setCategoryFilter(v == 'All' ? null : v)),
-            _dd('Status', p.statusFilter, ['All', 'Selected', 'Not Selected'],
-                (v) => p.setStatusFilter(v ?? 'All')),
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: TextButton(
-                onPressed: () {
-                  p.setSearchQuery('');
-                  p.setCategoryFilter(null);
-                  p.setStatusFilter('All');
-                },
-                style: TextButton.styleFrom(
-                  backgroundColor: const Color(0xFF4A4A4A),
-                  foregroundColor: const Color(0xFFD8D8D8),
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.clear_all, size: 16, color: Color(0xFFD8D8D8)),
-                    SizedBox(width: 6),
-                    Text('Clear All Filters',
-                        style: TextStyle(
-                            fontSize: 13, fontWeight: FontWeight.w500)),
-                  ],
-                ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          const Icon(Icons.filter_list, size: 14, color: Color(0xFFD8D8D8)),
+          const SizedBox(width: 6),
+          const Expanded(
+              child: Text('Filters',
+                  style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFFFFFFFF)))),
+          TouchFeedback(
+              borderRadius: 6,
+              onTap: () => p.toggleFilterPanel(),
+              child: Container(
+                  width: 24,
+                  height: 24,
+                  padding: const EdgeInsets.all(0),
+                  decoration: BoxDecoration(
+                      color: const Color(0xFF4A4A4A),
+                      borderRadius: BorderRadius.circular(6)),
+                  child: const Icon(Icons.close,
+                      size: 12, color: Color(0xFFD8D8D8)))),
+        ]),
+        const SizedBox(height: 8),
+        SizedBox(
+            height: 30,
+            child: TextField(
+                onChanged: (v) => p.setSearchQuery(v),
+                style: const TextStyle(fontSize: 12, color: Color(0xFFFFFFFF)),
+                decoration: InputDecoration(
+                    hintText: 'Search Defects',
+                    hintStyle:
+                        const TextStyle(fontSize: 12, color: Color(0xFFD8D8D8)),
+                    prefixIcon: const Icon(Icons.search,
+                        size: 16, color: Color(0xFFD8D8D8)),
+                    filled: true,
+                    fillColor: const Color(0xFF4A4A4A),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(4),
+                        borderSide: BorderSide.none)))),
+        const SizedBox(height: 6),
+        _dd('Status', p.statusFilter, ['All', 'Selected', 'Not Selected'],
+            (v) => p.setStatusFilter(v ?? 'All')),
+        const SizedBox(height: 6),
+        SizedBox(
+          width: double.infinity,
+          child: TextButton(
+            onPressed: () {
+              p.setSearchQuery('');
+              p.setStatusFilter('All');
+            },
+            style: TextButton.styleFrom(
+              backgroundColor: const Color(0xFF4A4A4A),
+              foregroundColor: const Color(0xFFD8D8D8),
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(4),
               ),
             ),
-            const Spacer(),
-            const Divider(color: Color(0xFF4A4A4A)),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(12),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.clear_all, size: 14, color: Color(0xFFD8D8D8)),
+                SizedBox(width: 4),
+                Text('Clear All Filters',
+                    style:
+                        TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+              ],
+            ),
+          ),
+        ),
+        const Spacer(),
+        const Divider(color: Color(0xFF4A4A4A)),
+        const SizedBox(height: 6),
+        Row(children: [
+          Container(
+              width: 28,
+              height: 28,
               decoration: BoxDecoration(
                   color: const Color(0xFF4A4A4A),
-                  borderRadius: BorderRadius.circular(6)),
-              child: Column(children: [
-                Row(children: [
-                  Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                          color: const Color(0xFF4A4A4A),
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: Color(0xFF8DAA00))),
-                      child: Center(
-                          child: Text('${p.selectedDefectCount}',
-                              style: const TextStyle(
-                                  color: Color(0xFFFFFFFF),
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700)))),
-                  const SizedBox(width: 10),
-                  const Text('Defect Selected',
-                      style: TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFFD8D8D8),
-                          fontWeight: FontWeight.w500)),
-                ]),
-                const SizedBox(height: 8),
-                Row(children: [
-                  Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                          color: const Color(0xFF4A4A4A),
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: Color(0xFF8DAA00))),
-                      child: Center(
-                          child: Text('${p.definitions.length}',
-                              style: const TextStyle(
-                                  color: Color(0xFFFFFFFF),
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700)))),
-                  const SizedBox(width: 10),
-                  const Expanded(
-                      child: Text('Combos will be created',
-                          style: TextStyle(
-                              fontSize: 12,
-                              color: Color(0xFFD8D8D8),
-                              fontWeight: FontWeight.w500))),
-                ]),
-              ]),
-            ),
-          ]),
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(color: Color(0xFF8DAA00))),
+              child: Center(
+                  child: Text('${p.selectedDefectCount}',
+                      style: const TextStyle(
+                          color: Color(0xFFFFFFFF),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700)))),
+          const SizedBox(width: 6),
+          const Text('Defect Selected',
+              style: TextStyle(
+                  fontSize: 11,
+                  color: Color(0xFFD8D8D8),
+                  fontWeight: FontWeight.w500)),
+        ]),
+      ]),
     );
   }
 
   Widget _dd(String label, String value, List<String> items,
       Function(String?) onChange) {
     return Padding(
-        padding: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.only(bottom: 4),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           if (label.isNotEmpty)
             Text(label,
-                style: const TextStyle(fontSize: 11, color: Color(0xFFD8D8D8))),
-          if (label.isNotEmpty) const SizedBox(height: 4),
+                style: const TextStyle(fontSize: 9, color: Color(0xFFD8D8D8))),
+          if (label.isNotEmpty) const SizedBox(height: 1),
           Container(
-              height: 38,
-              padding: const EdgeInsets.symmetric(horizontal: 10),
+              height: 24,
+              padding: const EdgeInsets.symmetric(horizontal: 6),
               decoration: BoxDecoration(
                   color: const Color(0xFF4A4A4A),
-                  borderRadius: BorderRadius.circular(6)),
+                  borderRadius: BorderRadius.circular(4)),
               child: DropdownButtonHideUnderline(
                   child: DropdownButton<String>(
                       value: value,
                       isExpanded: true,
                       dropdownColor: const Color(0xFF26384F),
                       style: const TextStyle(
-                          fontSize: 13, color: Color(0xFFFFFFFF)),
+                          fontSize: 11, color: Color(0xFFFFFFFF)),
                       items: items
                           .map(
                               (i) => DropdownMenuItem(value: i, child: Text(i)))

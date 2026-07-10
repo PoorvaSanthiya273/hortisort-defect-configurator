@@ -197,13 +197,16 @@ class _HistogramStepState extends State<HistogramStep> {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        const RotatedBox(
-                          quarterTurns: 3,
-                          child: Text('Frequency',
-                              style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFFFFFFFF))),
+                        Align(
+                          alignment: Alignment.center,
+                          child: const RotatedBox(
+                            quarterTurns: 3,
+                            child: Text('Frequency',
+                                style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFFFFFFFF))),
+                          ),
                         ),
                         const SizedBox(width: 4),
                         SizedBox(
@@ -243,7 +246,6 @@ class _HistogramStepState extends State<HistogramStep> {
                                               maxFrequency: maxFreq,
                                               maxBarHeight:
                                                   constraints.maxHeight,
-                                              label: bandLabels[index],
                                               onFrequencyChanged: (value) {
                                                 p.setBandFrequency(
                                                     currentKey, index, value);
@@ -266,8 +268,26 @@ class _HistogramStepState extends State<HistogramStep> {
                     ),
                   ),
                   const SizedBox(height: 4),
+                  Row(
+                    children: List.generate(noOfBands, (index) {
+                      return Expanded(
+                        child: Text(
+                          bandLabels[index],
+                          style: const TextStyle(
+                            fontSize: 10,
+                            color: Color(0xFFD8D8D8),
+                            fontWeight: FontWeight.w500,
+                          ),
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      );
+                    }),
+                  ),
+                  const SizedBox(height: 4),
                   const Center(
-                    child: Text('Bands',
+                    child: Text('Area',
                         style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
@@ -341,7 +361,6 @@ class _DraggableBar extends StatefulWidget {
   final double frequency;
   final double maxFrequency;
   final double maxBarHeight;
-  final String label;
   final Function(double) onFrequencyChanged;
 
   const _DraggableBar({
@@ -349,7 +368,6 @@ class _DraggableBar extends StatefulWidget {
     required this.frequency,
     required this.maxFrequency,
     required this.maxBarHeight,
-    required this.label,
     required this.onFrequencyChanged,
   });
 
@@ -426,88 +444,78 @@ class _DraggableBarState extends State<_DraggableBar> {
         ? const Color(0xFF8DAA00).withValues(alpha: 0.3)
         : const Color(0xFFFFFFFF);
 
-    return GestureDetector(
-      onVerticalDragStart: (_) => setState(() => _isDragging = true),
-      onVerticalDragUpdate: (details) {
-        final delta = -details.primaryDelta! * 0.5;
-        final newValue = _currentFrequency + delta;
-        setState(() {
-          _currentFrequency = newValue < 0 ? 0 : newValue.roundToDouble();
-        });
-        widget.onFrequencyChanged(_currentFrequency);
-      },
-      onVerticalDragEnd: (_) {
-        _currentFrequency = _currentFrequency.roundToDouble();
-        setState(() => _isDragging = false);
-        widget.onFrequencyChanged(_currentFrequency);
-      },
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          _isEditing
-              ? SizedBox(
-                  width: 54,
-                  height: 24,
-                  child: TextField(
-                    controller: _editController,
-                    focusNode: _focusNode,
-                    keyboardType: TextInputType.number,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
+    return ClipRect(
+      child: GestureDetector(
+        onVerticalDragStart: (_) => setState(() => _isDragging = true),
+        onVerticalDragUpdate: (details) {
+          final delta = -details.primaryDelta! * 0.5;
+          final newValue = _currentFrequency + delta;
+          setState(() {
+            _currentFrequency = newValue < 0 ? 0 : newValue.roundToDouble();
+          });
+          widget.onFrequencyChanged(_currentFrequency);
+        },
+        onVerticalDragEnd: (_) {
+          _currentFrequency = _currentFrequency.roundToDouble();
+          setState(() => _isDragging = false);
+          widget.onFrequencyChanged(_currentFrequency);
+        },
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            _isEditing
+                ? SizedBox(
+                    width: 54,
+                    height: 24,
+                    child: TextField(
+                      controller: _editController,
+                      focusNode: _focusNode,
+                      keyboardType: TextInputType.number,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFFFFFFFF)),
+                      decoration: const InputDecoration(
+                        isDense: true,
+                        contentPadding:
+                            EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                        border: OutlineInputBorder(
+                            borderSide: BorderSide(color: Color(0xFF8DAA00))),
+                        enabledBorder: OutlineInputBorder(
+                            borderSide: BorderSide(color: Color(0xFF8DAA00))),
+                        focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(color: Color(0xFF8DAA00))),
+                      ),
+                      onSubmitted: (_) => _commitEdit(),
+                    ),
+                  )
+                : GestureDetector(
+                    onTap: _startEditing,
+                    child: Text(
+                      _formatNum(_currentFrequency),
+                      style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFFFFFFFF)),
-                    decoration: const InputDecoration(
-                      isDense: true,
-                      contentPadding:
-                          EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                      border: OutlineInputBorder(
-                          borderSide: BorderSide(color: Color(0xFF8DAA00))),
-                      enabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: Color(0xFF8DAA00))),
-                      focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: Color(0xFF8DAA00))),
-                    ),
-                    onSubmitted: (_) => _commitEdit(),
-                  ),
-                )
-              : GestureDetector(
-                  onTap: _startEditing,
-                  child: Text(
-                    _formatNum(_currentFrequency),
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFFFFFFFF),
+                        color: Color(0xFFFFFFFF),
+                      ),
                     ),
                   ),
-                ),
-          const Icon(Icons.arrow_upward, size: 14, color: Color(0xFF8DAA00)),
-          const SizedBox(height: 4),
-          Container(
-            width: double.infinity,
-            height: barHeight.clamp(2, double.infinity).toDouble(),
-            margin: const EdgeInsets.symmetric(horizontal: 8),
-            decoration: BoxDecoration(
-              color: barBg,
-              border: Border.all(color: borderColor, width: 2),
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(4)),
+            const Icon(Icons.arrow_upward, size: 14, color: Color(0xFF8DAA00)),
+            const SizedBox(height: 4),
+            Container(
+              width: double.infinity,
+              height: barHeight.clamp(2, double.infinity).toDouble(),
+              margin: const EdgeInsets.symmetric(horizontal: 8),
+              decoration: BoxDecoration(
+                color: barBg,
+                border: Border.all(color: borderColor, width: 2),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(4)),
+              ),
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            widget.label,
-            style: const TextStyle(
-              fontSize: 12,
-              color: Color(0xFFD8D8D8),
-              fontWeight: FontWeight.w500,
-            ),
-            textAlign: TextAlign.center,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -54,9 +54,9 @@ class _ConfiguratorScreenState extends State<ConfiguratorScreen> {
   }
 
   Widget _topBar(BuildContext context, ConfiguratorProvider p, bool narrow) {
-    final h = narrow ? 60.0 : 76.0;
-    final logoH = narrow ? 28.0 : 36.0;
-    final gap = narrow ? 6.0 : 20.0;
+    final h = narrow ? 68.0 : 84.0;
+    final logoH = narrow ? 40.0 : 52.0;
+    final gap = narrow ? 6.0 : 12.0;
     return Container(
       height: h,
       padding: EdgeInsets.only(
@@ -64,14 +64,6 @@ class _ConfiguratorScreenState extends State<ConfiguratorScreen> {
       decoration: const BoxDecoration(color: AppTheme.headerBg),
       child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
         SvgPicture.asset('assets/logo.svg', height: logoH),
-        if (!narrow) const SizedBox(width: 6),
-        if (!narrow)
-          const Text('HORTISORT',
-              style: TextStyle(
-                  color: Color(0xFFFFFFFF),
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 3)),
         SizedBox(width: gap),
         Expanded(
             child: StepIndicator(
@@ -83,14 +75,17 @@ class _ConfiguratorScreenState extends State<ConfiguratorScreen> {
                 })),
         const SizedBox(width: 8),
         if (!narrow)
-          _navBtn(
-              '< Back', _currentStep > 0, () => setState(() => _currentStep--)),
+          _navBtn('< Back', _currentStep > 0, () {
+            if (_currentStep == 2) p.markAllDefectsSaved();
+            setState(() => _currentStep--);
+          }),
         if (!narrow) const SizedBox(width: 6),
         _navBtn(
             narrow
                 ? (_currentStep == 3 ? 'S' : '>')
                 : (_currentStep == 3 ? 'Save' : 'Next >'),
             _nextEnabled(p), () {
+          if (_currentStep == 0) p.markAllDefectsSaved();
           if (_currentStep == 3) {
             Provider.of<ConfiguratorProvider>(context, listen: false)
                 .saveConfiguration();
@@ -130,6 +125,7 @@ class _ConfiguratorScreenState extends State<ConfiguratorScreen> {
 
   bool _nextEnabled(ConfiguratorProvider p) {
     if (_currentStep == 0) return p.canProceedFromDefects;
+    if (_currentStep == 1) return p.canProceedFromHistogram;
     return true;
   }
 
