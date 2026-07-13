@@ -40,7 +40,7 @@ class _ProgramConfigStepState extends State<ProgramConfigStep> {
       final progNameValid = _nameController.text.trim().isNotEmpty;
       final produceValid = p.produceName.isNotEmpty;
       return Padding(
-        padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
+        padding: const EdgeInsets.fromLTRB(24, 12, 24, 12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -63,24 +63,28 @@ class _ProgramConfigStepState extends State<ProgramConfigStep> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _buildHeader(),
-        const SizedBox(height: 8),
+        const SizedBox(height: 4),
         _buildSubtitle(),
-        const SizedBox(height: 32),
+        const SizedBox(height: 20),
         _buildProgramDetailsCard(p, progNameValid, produceValid),
-        const SizedBox(height: 28),
+        const SizedBox(height: 20),
         _buildGradingSection(p),
       ],
     );
   }
 
   Widget _buildHeader() {
-    return Text('Program Configuration', style: AppTheme.headingXLarge);
+    return Text('Program Configuration',
+        style: TextStyle(
+            fontSize: 26,
+            fontWeight: FontWeight.w700,
+            color: AppTheme.textPrimary));
   }
 
   Widget _buildSubtitle() {
     return Text(
       'Configure the basic grading settings before defining defects.',
-      style: TextStyle(fontSize: 18, color: AppTheme.textSecondary),
+      style: TextStyle(fontSize: 14, color: AppTheme.textSecondary),
     );
   }
 
@@ -93,7 +97,7 @@ class _ProgramConfigStepState extends State<ProgramConfigStep> {
         border: AppTheme.defaultBorder,
         boxShadow: AppTheme.cardShadow,
       ),
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
