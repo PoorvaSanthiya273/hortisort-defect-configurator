@@ -25,9 +25,6 @@ class AppTheme {
   static const Color greenHighlight = hortisortGreen;
   static const Color orangeBar = warning;
   static const Color stopRed = danger;
-  static const Color outletGreen = Color(0xFFD4EE7B);
-  static const Color outletRed = Color(0xFFFF6B6B);
-  static const Color outletOrange = Color(0xFFFFD54F);
   static const Color goodFill = Color(0xFF3D7A4E);
   static const Color mixedFill = Color(0xFF9E4A4A);
   static const Color badFill = Color(0xFF6B2C2C);
