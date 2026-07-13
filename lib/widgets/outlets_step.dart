@@ -272,10 +272,10 @@ class _OutletsStepState extends State<OutletsStep> {
             final allGood = tokens.every((t) => t.endsWith('=Good'));
             final allBad = tokens.every((t) => t.endsWith('=Bad'));
             final gColor = allGood
-                ? AppTheme.greenHighlight
+                ? AppTheme.outletGreen
                 : allBad
-                    ? AppTheme.stopRed
-                    : AppTheme.orangeBar;
+                    ? AppTheme.outletRed
+                    : AppTheme.outletOrange;
             final outlets = <int>[];
             if (p.isComboInOutlet(dk, 1)) outlets.add(1);
             if (p.isComboInOutlet(dk, 2)) outlets.add(2);
@@ -352,10 +352,10 @@ class _OutletsStepState extends State<OutletsStep> {
               style: const TextStyle(fontSize: 15, color: AppTheme.primaryText),
               items: [1, 2, 3].map((n) {
                 final c = n == 1
-                    ? AppTheme.greenHighlight
+                    ? AppTheme.outletGreen
                     : n == 2
-                        ? AppTheme.orangeBar
-                        : AppTheme.stopRed;
+                        ? AppTheme.outletOrange
+                        : AppTheme.outletRed;
                 return DropdownMenuItem<int>(
                     value: n,
                     child: Row(mainAxisSize: MainAxisSize.min, children: [
@@ -417,12 +417,11 @@ class _OutletsStepState extends State<OutletsStep> {
                   final pts = t.split('=');
                   final d = p.selectedDefects.firstWhere((x) => x.id == pts[0]);
                   final isG = pts[1] == 'Good';
-                  final fill = isG ? AppTheme.goodFill : AppTheme.badFill;
                   return Container(
                     padding:
                         const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
-                        color: fill, borderRadius: BorderRadius.circular(4)),
+                        color: gColor, borderRadius: BorderRadius.circular(4)),
                     child: Text('${d.name}: ${pts[1]}',
                         style: const TextStyle(
                             fontSize: 13,
@@ -444,10 +443,10 @@ class _OutletsStepState extends State<OutletsStep> {
                                 horizontal: 5, vertical: 1),
                             decoration: BoxDecoration(
                                 color: o == 1
-                                    ? AppTheme.greenHighlight
+                                    ? AppTheme.outletGreen
                                     : o == 2
-                                        ? AppTheme.orangeBar
-                                        : AppTheme.stopRed,
+                                        ? AppTheme.outletOrange
+                                        : AppTheme.outletRed,
                                 borderRadius: BorderRadius.circular(3)),
                             child: Text('O$o',
                                 style: const TextStyle(
@@ -492,10 +491,10 @@ class _OutletsStepState extends State<OutletsStep> {
   Widget _queue(int n, ConfiguratorProvider p) {
     final combos = p.combosForOutlet(n);
     final borderColor = n == 1
-        ? AppTheme.greenHighlight
+        ? AppTheme.outletGreen
         : n == 2
-            ? AppTheme.orangeBar
-            : AppTheme.stopRed;
+            ? AppTheme.outletOrange
+            : AppTheme.outletRed;
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: DragTarget<String>(
