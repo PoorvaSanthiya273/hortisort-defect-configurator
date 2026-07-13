@@ -40,13 +40,24 @@ class _ProgramConfigStepState extends State<ProgramConfigStep> {
       final progNameValid = _nameController.text.trim().isNotEmpty;
       final produceValid = p.produceName.isNotEmpty;
       return Padding(
-        padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
-        child: _buildLeftPanel(p, progNameValid, produceValid),
+        padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                child: _buildTopContent(p, progNameValid, produceValid),
+              ),
+            ),
+            const SizedBox(height: 20),
+            _buildActionToolbar(),
+          ],
+        ),
       );
     });
   }
 
-  Widget _buildLeftPanel(
+  Widget _buildTopContent(
       ProgramConfigProvider p, bool progNameValid, bool produceValid) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -54,12 +65,10 @@ class _ProgramConfigStepState extends State<ProgramConfigStep> {
         _buildHeader(),
         const SizedBox(height: 8),
         _buildSubtitle(),
-        const Spacer(),
+        const SizedBox(height: 32),
         _buildProgramDetailsCard(p, progNameValid, produceValid),
-        const SizedBox(height: 70),
-        _buildGradingSection(p),
         const SizedBox(height: 28),
-        _buildActionToolbar(),
+        _buildGradingSection(p),
       ],
     );
   }
@@ -219,7 +228,8 @@ class _ProgramConfigStepState extends State<ProgramConfigStep> {
             p.setProduceName(name);
             setState(() {});
           },
-          offset: const Offset(0, 60),
+          offset: const Offset(0, 56),
+          constraints: const BoxConstraints(maxHeight: 250),
           color: AppTheme.cardSecondary,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
@@ -315,12 +325,10 @@ class _ProgramConfigStepState extends State<ProgramConfigStep> {
                 color: AppTheme.textPrimary)),
         const SizedBox(height: 16),
         Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: _features.asMap().entries.map((entry) {
-            final i = entry.key;
-            final f = entry.value;
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: _features.map((f) {
             return Padding(
-              padding: EdgeInsets.only(left: i == 0 ? 0 : 12),
+              padding: const EdgeInsets.only(right: 16),
               child: _buildChip(f, p),
             );
           }).toList(),
@@ -367,54 +375,57 @@ class _ProgramConfigStepState extends State<ProgramConfigStep> {
 
   Widget _buildActionToolbar() {
     return Container(
-      height: 56,
-      decoration: BoxDecoration(
-        color: AppTheme.cardPrimary,
-        borderRadius: BorderRadius.circular(10),
-        border: AppTheme.defaultBorder,
-        boxShadow: AppTheme.cardShadow,
-      ),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+      decoration: const BoxDecoration(color: AppTheme.mainBg),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
+          _toolbarBtn(Icons.save_outlined, 'Save', () => _onSave(),
+              isPrimary: true),
+          const SizedBox(width: 8),
           _toolbarBtn(Icons.add_circle_outline, 'New', () => _onNew()),
-          const SizedBox(width: 4),
+          const SizedBox(width: 8),
           _toolbarBtn(Icons.edit_outlined, 'Edit', () => _onEdit()),
-          const SizedBox(width: 4),
-          _toolbarBtn(Icons.save_outlined, 'Save', () => _onSave()),
-          const SizedBox(width: 4),
-          _toolbarBtn(Icons.delete_outlined, 'Delete', () => _onDelete()),
-          const SizedBox(width: 4),
+          const SizedBox(width: 8),
+          _toolbarBtn(Icons.delete_outlined, 'Delete', () => _onDelete(),
+              isDanger: true),
+          const SizedBox(width: 8),
           _toolbarBtn(Icons.clear_all_outlined, 'Clear', () => _resetForm()),
         ],
       ),
     );
   }
 
-  Widget _toolbarBtn(IconData icon, String label, VoidCallback onTap) {
-    return Expanded(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 2),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(8),
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 2),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  Icon(icon, size: 18, color: AppTheme.textSecondary),
-                  const SizedBox(height: 2),
-                  Text(label,
-                      style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: AppTheme.textSecondary)),
-                ],
-              ),
-            ),
+  Widget _toolbarBtn(IconData icon, String label, VoidCallback onTap,
+      {bool isPrimary = false, bool isDanger = false}) {
+    final bgColor = isPrimary
+        ? AppTheme.hortisortGreen
+        : isDanger
+            ? AppTheme.danger
+            : AppTheme.cardSecondary;
+    final fgColor = isPrimary || isDanger
+        ? const Color(0xFF0F1115)
+        : AppTheme.textSecondary;
+    return SizedBox(
+      width: 72,
+      height: 48,
+      child: Material(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(8),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(8),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 14, color: fgColor),
+              const SizedBox(height: 3),
+              Text(label,
+                  style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: fgColor)),
+            ],
           ),
         ),
       ),
