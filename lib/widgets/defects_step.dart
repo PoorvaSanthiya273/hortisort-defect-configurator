@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/configurator_provider.dart';
+import '../theme/app_theme.dart';
 import 'defect_image.dart';
 import 'touch_feedback.dart';
 
@@ -274,7 +275,7 @@ class DefectsStep extends StatelessWidget {
           color: active ? const Color(0xFF4A4A4A) : Colors.transparent,
           borderRadius: BorderRadius.circular(4),
           border: Border.all(
-            color: active ? const Color(0xFF8DAA00) : Colors.transparent,
+            color: active ? AppTheme.hortisortGreen : Colors.transparent,
             width: 1,
           ),
         ),
@@ -314,15 +315,15 @@ class _DefectCardState extends State<_DefectCard> {
               borderRadius: BorderRadius.circular(6),
               border: Border.all(
                   color: sel
-                      ? const Color(0xFF8DAA00)
+                      ? AppTheme.hortisortGreen
                       : _hovered
-                          ? const Color(0xFF8DAA00).withValues(alpha: 0.3)
+                          ? AppTheme.hortisortGreen.withValues(alpha: 0.3)
                           : const Color(0xFF4A4A4A),
                   width: sel ? 2 : 1),
               boxShadow: sel
                   ? [
-                      const BoxShadow(
-                          color: Color(0x338DAA00),
+                      BoxShadow(
+                          color: AppTheme.hortisortGreen.withValues(alpha: 0.2),
                           blurRadius: 8,
                           offset: Offset(0, 2))
                     ]
@@ -368,7 +369,7 @@ class _DefectCardState extends State<_DefectCard> {
                                     fontSize: 12,
                                     fontWeight: FontWeight.w600,
                                     color: sel
-                                        ? const Color(0xFF8DAA00)
+                                        ? AppTheme.hortisortGreen
                                         : const Color(0xFFFFFFFF)),
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis),
@@ -406,7 +407,7 @@ class _DefectListTile extends StatelessWidget {
             color: const Color(0xFF26384F),
             borderRadius: BorderRadius.circular(6),
             border: Border.all(
-              color: sel ? const Color(0xFF8DAA00) : const Color(0xFF4A4A4A),
+              color: sel ? AppTheme.hortisortGreen : const Color(0xFF4A4A4A),
               width: sel ? 2 : 1,
             ),
           ),
@@ -432,7 +433,7 @@ class _DefectListTile extends StatelessWidget {
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
                           color: sel
-                              ? const Color(0xFF8DAA00)
+                              ? AppTheme.hortisortGreen
                               : const Color(0xFFFFFFFF))),
                   const SizedBox(height: 2),
                   Text(d.category,
