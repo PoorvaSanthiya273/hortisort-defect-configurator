@@ -343,12 +343,10 @@ class _ProgramConfigStepState extends State<ProgramConfigStep> {
   }
 
   Widget _buildChip(_FeatureCardData f, ProgramConfigProvider p) {
-    final selected =
-        p.gradingBasedOn == 'Defect Feature' && f.name == 'Feature' ||
-            p.gradingBasedOn == f.name;
+    final selected = p.isGradingSelected(f.name);
     return GestureDetector(
       onTap: () {
-        p.setGradingBasedOn(f.name == 'Feature' ? 'Defect Feature' : f.name);
+        p.toggleGradingOn(f.name);
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
@@ -563,7 +561,8 @@ class _ProgramConfigStepState extends State<ProgramConfigStep> {
 
     p.setProgramName(data['ProgramName'] as String? ?? '');
     p.setProduceName(data['ProduceName'] as String? ?? '');
-    p.setGradingBasedOn(data['GradingBasedOn'] as String? ?? 'Defect Feature');
+    final grades = (data['GradingBasedOn'] as String? ?? 'Feature').split(', ');
+    p.setGradingOnAll(grades.map((g) => g.trim()).toList());
     _nameController.text = data['ProgramName'] as String? ?? '';
     setState(() {});
     _showSnackbar('Loaded: $selected');

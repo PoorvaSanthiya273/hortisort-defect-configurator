@@ -12,13 +12,14 @@ class ProgramConfigProvider extends ChangeNotifier {
   bool _configLoaded = false;
 
   String _programName = '';
-  String _gradingBasedOn = 'Defect Feature';
+  final Set<String> _gradingBasedOn = {'Feature'};
   String _produceName = '';
 
   final List<String> _savedProgramNames = [];
 
   String get programName => _programName;
-  String get gradingBasedOn => _gradingBasedOn;
+  String get gradingBasedOn => _gradingBasedOn.join(', ');
+  Set<String> get selectedGradingBasedOn => Set.unmodifiable(_gradingBasedOn);
   String get produceName => _produceName;
   bool get configLoaded => _configLoaded;
   GradingConfig? get gradingConfig => _gradingConfig;
@@ -101,10 +102,23 @@ class ProgramConfigProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setGradingBasedOn(String v) {
-    _gradingBasedOn = v;
+  void toggleGradingOn(String v) {
+    if (_gradingBasedOn.contains(v)) {
+      _gradingBasedOn.remove(v);
+    } else {
+      _gradingBasedOn.add(v);
+    }
     notifyListeners();
   }
+
+  void setGradingOnAll(List<String> values) {
+    _gradingBasedOn
+      ..clear()
+      ..addAll(values);
+    notifyListeners();
+  }
+
+  bool isGradingSelected(String v) => _gradingBasedOn.contains(v);
 
   void setProduceName(String v) {
     _produceName = v;
@@ -123,7 +137,7 @@ class ProgramConfigProvider extends ChangeNotifier {
     final program = ProgramModel(
       programName: _programName,
       produceName: _produceName,
-      gradingBasedOn: _gradingBasedOn,
+      gradingBasedOn: _gradingBasedOn.join(', '),
       deleteEnable: false,
     );
     final jsonStr =
@@ -175,7 +189,8 @@ class ProgramConfigProvider extends ChangeNotifier {
 
   void reset() {
     _programName = '';
-    _gradingBasedOn = 'Defect Feature';
+    _gradingBasedOn.clear();
+    _gradingBasedOn.add('Feature');
     _produceName = '';
     notifyListeners();
   }

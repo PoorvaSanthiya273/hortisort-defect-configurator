@@ -88,7 +88,7 @@ class _ConfiguratorScreenState extends State<ConfiguratorScreen> {
             narrow
                 ? (_currentStep == 4 ? 'S' : '>')
                 : (_currentStep == 4 ? 'Save' : 'Next >'),
-            _nextEnabled(p, pp), () {
+            _nextEnabled(p, pp), () async {
           if (_currentStep == 4) {
             final pp =
                 Provider.of<ProgramConfigProvider>(context, listen: false);
@@ -96,8 +96,17 @@ class _ConfiguratorScreenState extends State<ConfiguratorScreen> {
                 Provider.of<ConfiguratorProvider>(context, listen: false);
             cp.setProgramName(pp.programName);
             cp.setProduceName(pp.produceName);
-            cp.saveConfiguration(
+            await cp.saveConfiguration(
                 programName: pp.programName, produceName: pp.produceName);
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                content: Text(cp.saveError ?? 'Program saved'),
+                backgroundColor: cp.saveError != null
+                    ? AppTheme.danger
+                    : AppTheme.hortisortGreen,
+                duration: const Duration(seconds: 2),
+              ));
+            }
           } else {
             if (_currentStep == 0 || _currentStep == 1) {
               final cp =

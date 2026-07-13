@@ -90,7 +90,10 @@ class _OutletsStepState extends State<OutletsStep> {
                         borderRadius: BorderRadius.circular(4),
                         borderSide: BorderSide.none)))),
         const SizedBox(height: 12),
-        _dd('Defect', p.filterDefect, p.defects.map((d) => d.id).toList(),
+        _dd(
+            'Defect',
+            p.filterDefect,
+            p.selectedDefects.map((d) => d.id).toList(),
             (v) => p.setFilterDefect(v ?? 'all')),
         _dd('Grade', p.filterGrade, ['Good', 'Mixed', 'Bad'],
             (v) => p.setFilterGrade(v ?? 'all')),
@@ -412,7 +415,7 @@ class _OutletsStepState extends State<OutletsStep> {
                 runSpacing: 4,
                 children: tokens.map((t) {
                   final pts = t.split('=');
-                  final d = p.defects.firstWhere((x) => x.id == pts[0]);
+                  final d = p.selectedDefects.firstWhere((x) => x.id == pts[0]);
                   final isG = pts[1] == 'Good';
                   final fill = isG ? AppTheme.goodFill : AppTheme.badFill;
                   return Container(
@@ -581,7 +584,8 @@ class _OutletsStepState extends State<OutletsStep> {
                       runSpacing: 2,
                       children: tokens.map((t) {
                         final pts = t.split('=');
-                        final d = p.defects.firstWhere((x) => x.id == pts[0]);
+                        final d =
+                            p.selectedDefects.firstWhere((x) => x.id == pts[0]);
                         final isG = pts[1] == 'Good';
                         final fill = isG ? AppTheme.goodFill : AppTheme.badFill;
                         return Container(

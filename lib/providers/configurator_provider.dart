@@ -132,6 +132,8 @@ class ConfiguratorProvider extends ChangeNotifier {
   DefectModel? get activeDefect => _selectedDefectIds.isNotEmpty
       ? _defects.firstWhere((d) => d.id == _selectedDefectIds.first)
       : _defects.first;
+  List<DefectModel> get selectedDefects =>
+      _defects.where((d) => _selectedDefectIds.contains(d.id)).toList();
 
   // Generated definitions: Cartesian product of Good/Bad across selected defects
   List<String> get definitions {
@@ -683,6 +685,8 @@ class ConfiguratorProvider extends ChangeNotifier {
   // Save state
   bool _isSaved = true;
   bool get isSaved => _isSaved;
+  String? _saveError;
+  String? get saveError => _saveError;
 
   // Outlet assignments
   final Map<String, int> _outletAssignments = {};
@@ -1026,8 +1030,9 @@ class ConfiguratorProvider extends ChangeNotifier {
     try {
       final fileName = programName.isNotEmpty ? programName : 'Untitled';
       await saveProgramFile(fileName, jsonStr);
+      _saveError = null;
     } catch (e) {
-      debugPrint('Failed to save program file: $e');
+      _saveError = 'Failed to save: $e';
     }
 
     notifyListeners();

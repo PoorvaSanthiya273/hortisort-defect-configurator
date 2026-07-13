@@ -56,9 +56,14 @@ class SaveProgramRequest(BaseModel):
 
 @app.post("/api/programs")
 async def save_program(req: SaveProgramRequest):
-    filepath = PROGRAMS_DIR / f"{req.filename}.json"
-    filepath.write_text(json.dumps(req.content, indent=2), encoding="utf-8")
-    return {"status": "ok", "path": str(filepath)}
+    try:
+        filepath = PROGRAMS_DIR / f"{req.filename}.json"
+        filepath.write_text(json.dumps(req.content, indent=2), encoding="utf-8")
+        print(f"[SAVED] {filepath}")
+        return {"status": "ok", "path": str(filepath), "name": req.filename}
+    except Exception as e:
+        print(f"[SAVE ERROR] {e}")
+        raise HTTPException(500, f"Failed to save: {str(e)}")
 
 
 @app.get("/api/programs/{name}")
