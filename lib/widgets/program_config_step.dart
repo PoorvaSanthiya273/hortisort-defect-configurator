@@ -44,6 +44,7 @@ class _ProgramConfigStepState extends State<ProgramConfigStep> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            const SizedBox(height: 20),
             Expanded(
               child: SingleChildScrollView(
                 child: _buildTopContent(p, progNameValid, produceValid),

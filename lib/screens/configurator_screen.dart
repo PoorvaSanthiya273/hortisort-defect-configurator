@@ -109,7 +109,6 @@ class _ConfiguratorScreenState extends State<ConfiguratorScreen> {
               Provider.of<ConfiguratorProvider>(context, listen: false)
                   .loadVisionFeatures(pp.visionFeatures);
             }
-            if (_currentStep == 1) p.markAllDefectsSaved();
             setState(() => _currentStep++);
           }
         }),
