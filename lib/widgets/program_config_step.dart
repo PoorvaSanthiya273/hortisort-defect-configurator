@@ -383,15 +383,13 @@ class _ProgramConfigStepState extends State<ProgramConfigStep> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          _toolbarBtn(Icons.save_outlined, 'Save', () => _onSave(),
-              isPrimary: true),
+          _toolbarBtn(Icons.save_outlined, 'Save', () => _onSave()),
           const SizedBox(width: 8),
           _toolbarBtn(Icons.add_circle_outline, 'New', () => _onNew()),
           const SizedBox(width: 8),
           _toolbarBtn(Icons.edit_outlined, 'Edit', () => _onEdit()),
           const SizedBox(width: 8),
-          _toolbarBtn(Icons.delete_outlined, 'Delete', () => _onDelete(),
-              isDanger: true),
+          _toolbarBtn(Icons.delete_outlined, 'Delete', () => _onDelete()),
           const SizedBox(width: 8),
           _toolbarBtn(Icons.clear_all_outlined, 'Clear', () => _resetForm()),
         ],
