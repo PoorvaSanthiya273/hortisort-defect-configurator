@@ -294,16 +294,16 @@ class _HistogramStepState extends State<HistogramStep> {
                   ),
                   const SizedBox(height: 4),
                   const Center(
-                    child: Text('Area',
+                    child: Text('Area (mm²)',
                         style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                             color: Color(0xFFFFFFFF))),
                   ),
-                  const SizedBox(height: 8),
-                  _buildClassActionBar(p, currentKey),
                 ]),
               ),
+              const SizedBox(height: 12),
+              _buildClassActionBar(p, currentKey),
             ]),
           ),
         ]),
@@ -313,87 +313,101 @@ class _HistogramStepState extends State<HistogramStep> {
 
   Widget _buildClassActionBar(ConfiguratorProvider p, String? currentKey) {
     final count = currentKey != null ? p.selectedBandCount(currentKey) : 0;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SizedBox(height: 8),
-        const Text('Assign Selected Bands',
-            style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFFFFFFFF))),
-        const SizedBox(height: 2),
-        Text('Select one or more bands on the chart.',
-            style: const TextStyle(fontSize: 11, color: Color(0xFFD8D8D8))),
-        const SizedBox(height: 8),
-        Row(children: [
-          Expanded(
-            child: GestureDetector(
-              onTap: currentKey != null && count > 0
-                  ? () => p.markSelectedGood(currentKey)
-                  : null,
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                    border: Border.all(
-                        color: count > 0
-                            ? AppTheme.hortisortGreen
-                            : const Color(0xFF4A4A4A)),
-                    borderRadius: BorderRadius.circular(4)),
-                child: const Center(
-                    child: Text('Mark as Good',
-                        style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: AppTheme.hortisortGreen))),
-              ),
+    final disabled = count == 0;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.cardSecondary,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFF4A4A4A)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Assign Selected Bands',
+              style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFFFFFFFF))),
+          const SizedBox(height: 2),
+          const Text('Select one or more bands on the chart.',
+              style: TextStyle(fontSize: 12, color: Color(0xFFD8D8D8))),
+          const SizedBox(height: 12),
+          Row(children: [
+            _actionBtn(
+              'Mark as Good',
+              AppTheme.hortisortGreen,
+              disabled ? null : () => p.markSelectedGood(currentKey!),
+              disabled,
+            ),
+            const SizedBox(width: 10),
+            _actionBtn(
+              'Mark as Defective',
+              AppTheme.danger,
+              disabled ? null : () => p.markSelectedDefective(currentKey!),
+              disabled,
+            ),
+            const Spacer(),
+            _actionBtnOutline(
+              'Reset',
+              disabled ? null : () => p.clearBandSelection(currentKey!),
+              disabled,
+            ),
+          ]),
+        ],
+      ),
+    );
+  }
+
+  Widget _actionBtn(
+      String label, Color color, VoidCallback? onTap, bool disabled) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedOpacity(
+          opacity: disabled ? 0.4 : 1.0,
+          duration: const Duration(milliseconds: 200),
+          child: Container(
+            height: 44,
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Center(
+              child: Text(label,
+                  style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF0F1115))),
             ),
           ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: GestureDetector(
-              onTap: currentKey != null && count > 0
-                  ? () => p.markSelectedDefective(currentKey)
-                  : null,
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                    border: Border.all(
-                        color: count > 0
-                            ? AppTheme.danger
-                            : const Color(0xFF4A4A4A)),
-                    borderRadius: BorderRadius.circular(4)),
-                child: const Center(
-                    child: Text('Mark as Defective',
-                        style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: AppTheme.danger))),
-              ),
-            ),
+        ),
+      ),
+    );
+  }
+
+  Widget _actionBtnOutline(String label, VoidCallback? onTap, bool disabled) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedOpacity(
+        opacity: disabled ? 0.4 : 1.0,
+        duration: const Duration(milliseconds: 200),
+        child: Container(
+          height: 44,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            border: Border.all(color: const Color(0xFF4A4A4A)),
+            borderRadius: BorderRadius.circular(6),
           ),
-          const SizedBox(width: 8),
-          GestureDetector(
-            onTap: currentKey != null && count > 0
-                ? () => p.clearBandSelection(currentKey)
-                : null,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                  border: Border.all(color: const Color(0xFF4A4A4A)),
-                  borderRadius: BorderRadius.circular(4)),
-              child: const Center(
-                  child: Text('Reset',
-                      style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFFFFFFFF)))),
-            ),
+          child: Center(
+            child: Text(label,
+                style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFFFFFFFF))),
           ),
-        ]),
-      ],
+        ),
+      ),
     );
   }
 
