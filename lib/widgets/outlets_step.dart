@@ -443,16 +443,16 @@ class _OutletsStepState extends State<OutletsStep> {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 5, vertical: 1),
                             decoration: BoxDecoration(
-                                color: const Color(0xFF4A4A4A),
+                                color: o == 1
+                                    ? AppTheme.greenHighlight
+                                    : o == 2
+                                        ? AppTheme.orangeBar
+                                        : AppTheme.stopRed,
                                 borderRadius: BorderRadius.circular(3)),
                             child: Text('O$o',
-                                style: TextStyle(
+                                style: const TextStyle(
                                     fontSize: 14,
-                                    color: o == 1
-                                        ? const Color(0xFF8DAA00)
-                                        : o == 2
-                                            ? const Color(0xFFF5A000)
-                                            : AppTheme.badFill,
+                                    color: Colors.white,
                                     fontWeight: FontWeight.w600))))
                         .toList())),
         Expanded(flex: 2, child: _statusBadge(status)),
@@ -516,13 +516,13 @@ class _OutletsStepState extends State<OutletsStep> {
                     width: 30,
                     height: 30,
                     decoration: BoxDecoration(
-                        color: AppTheme.darkGrey,
+                        color: borderColor,
                         borderRadius: BorderRadius.circular(4),
                         border: Border.all(color: borderColor)),
                     child: Center(
                         child: Text('0$n',
                             style: const TextStyle(
-                                color: AppTheme.primaryText,
+                                color: Colors.white,
                                 fontSize: 20,
                                 fontWeight: FontWeight.w800)))),
                 const SizedBox(width: 8),
