@@ -1,0 +1,18 @@
+{
+  "ProgramName": "2",
+  "ProduceName": "Orange",
+  "GradingBasedOn": "Weight",
+  "DeleteEnable": false,
+  "ColourGrades": {
+    "ColourGradeTable": []
+  },
+  "SizeGrades": {
+    "SizeGradeTable": []
+  },
+  "WeightGrades": {
+    "WeightGradeTable": []
+  },
+  "FeatureTable": [],
+  "SpectroFeatureTable": [],
+  "OutletMapping": []
+}

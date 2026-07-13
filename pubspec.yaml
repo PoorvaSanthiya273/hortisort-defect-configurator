@@ -21,5 +21,3 @@ flutter:
   uses-material-design: true
   assets:
     - assets/logo.svg
-    - assets/defects/
-    - assets/config/gradingconfig.json

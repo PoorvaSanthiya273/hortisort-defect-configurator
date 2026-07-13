@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/configurator_provider.dart';
+import '../providers/program_config_provider.dart';
+import '../services/file_service.dart';
 
 class PreviewStep extends StatefulWidget {
   const PreviewStep({super.key});
@@ -37,8 +39,33 @@ class _PreviewStepState extends State<PreviewStep> {
                       style: TextStyle(fontSize: 16, color: Color(0xFFD8D8D8))),
                 ]),
             const Spacer(),
-            _btn('Export JSON', Icons.file_download, () => p.exportJSON(),
-                const Color(0xFF4A4A4A)),
+            _btn('Export JSON', Icons.file_download, () async {
+              final pp =
+                  Provider.of<ProgramConfigProvider>(context, listen: false);
+              p.setProgramName(pp.programName);
+              p.setProduceName(pp.produceName);
+              final json = p.exportJSON();
+              final name =
+                  pp.programName.isNotEmpty ? pp.programName : 'Untitled';
+              await saveProgramFile(name, json);
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Row(children: [
+                      Icon(Icons.check_circle,
+                          color: Color(0xFF8DAA00), size: 18),
+                      SizedBox(width: 8),
+                      Text('JSON exported!',
+                          style: TextStyle(fontSize: 14, color: Colors.white)),
+                    ]),
+                    backgroundColor: Color(0xFF26384F),
+                    duration: Duration(seconds: 2),
+                    behavior: SnackBarBehavior.floating,
+                    margin: EdgeInsets.all(10),
+                  ),
+                );
+              }
+            }, const Color(0xFF4A4A4A)),
             const SizedBox(width: 8),
             _btn('Save Config', Icons.save, () {
               p.saveConfiguration();

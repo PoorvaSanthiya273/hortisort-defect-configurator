@@ -15,11 +15,11 @@ class StepIndicator extends StatelessWidget {
       this.onStepTap});
 
   static const _icons = [
+    Icons.settings,
     Icons.search,
     Icons.bar_chart,
     Icons.call_split,
     Icons.visibility,
-    Icons.save
   ];
 
   @override

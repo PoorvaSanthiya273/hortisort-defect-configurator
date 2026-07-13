@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'theme/app_theme.dart';
 import 'providers/configurator_provider.dart';
+import 'providers/program_config_provider.dart';
 import 'screens/configurator_screen.dart';
 
 void main() {
@@ -13,8 +14,12 @@ class HortisortApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => ConfiguratorProvider(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+            create: (_) => ProgramConfigProvider()..loadGradingConfig()),
+        ChangeNotifierProvider(create: (_) => ConfiguratorProvider()),
+      ],
       child: MaterialApp(
         title: 'Hortisort Defect Configurator',
         debugShowCheckedModeBanner: false,

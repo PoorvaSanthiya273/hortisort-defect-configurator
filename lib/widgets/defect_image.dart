@@ -1,4 +1,5 @@
 import 'dart:ui' as ui;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'defect_image_gen.dart';
 
@@ -8,27 +9,30 @@ class DefectImage extends StatelessWidget {
 
   const DefectImage({super.key, required this.defectId, this.size = 160});
 
-  static final Map<String, String> _assetMap = {
-    'D01': 'assets/defects/D01_green.png',
-    'D02': 'assets/defects/D02_cracks.png',
-    'D03': 'assets/defects/D03_stones.png',
-    'D04': 'assets/defects/D04_rhizo.png',
-    'D05': 'assets/defects/D05_aging.png',
-    'D06': 'assets/defects/D06_rotten.png',
-    'D07': 'assets/defects/D07_freshcut.png',
-    'D08': 'assets/defects/D08_blackspot.png',
-    'D09': 'assets/defects/D09_scab.png',
-    'D10': 'assets/defects/D10_misshape.png',
-    'D11': 'assets/defects/D11_leafgrass.png',
+  static const Map<String, String> _imageUrls = {
+    'D01': '/api/images/defects/D01_green.png',
+    'D02': '/api/images/defects/D02_cracks.png',
+    'D03': '/api/images/defects/D03_stones.png',
+    'D04': '/api/images/defects/D04_rhizo.png',
+    'D05': '/api/images/defects/D05_aging.png',
+    'D06': '/api/images/defects/D06_rotten.png',
+    'D07': '/api/images/defects/D07_freshcut.png',
+    'D08': '/api/images/defects/D08_blackspot.png',
+    'D09': '/api/images/defects/D09_scab.png',
+    'D10': '/api/images/defects/D10_misshape.png',
+    'D11': '/api/images/defects/D11_leafgrass.png',
   };
 
   @override
   Widget build(BuildContext context) {
-    final asset = _assetMap[defectId];
-    if (asset != null) {
+    final url = _imageUrls[defectId];
+    if (url != null) {
       return ClipRRect(
         borderRadius: BorderRadius.circular(8),
-        child: Image.asset(asset, width: size, height: size, fit: BoxFit.cover),
+        child: kIsWeb
+            ? Image.network(url, width: size, height: size, fit: BoxFit.cover)
+            : Image.asset('assets/defects/${url.split("/").last}',
+                width: size, height: size, fit: BoxFit.cover),
       );
     }
     return _GeneratedDefectImage(defectId: defectId, size: size);

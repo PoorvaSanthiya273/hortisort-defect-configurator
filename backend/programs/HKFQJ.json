@@ -1,0 +1,18 @@
+{
+  "ProgramName": "HKFQJ",
+  "ProduceName": "Orange",
+  "GradingBasedOn": "Defect Feature",
+  "DeleteEnable": false,
+  "ColourGrades": {
+    "ColourGradeTable": []
+  },
+  "SizeGrades": {
+    "SizeGradeTable": []
+  },
+  "WeightGrades": {
+    "WeightGradeTable": []
+  },
+  "FeatureTable": [],
+  "SpectroFeatureTable": [],
+  "OutletMapping": []
+}

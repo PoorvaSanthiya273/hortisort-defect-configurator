@@ -1,8 +1,12 @@
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import '../models/defect_model.dart';
 
 import '../models/histogram_config.dart';
 import '../models/classification_model.dart';
+import '../models/grading_config_model.dart';
+import '../models/program_model.dart';
+import '../services/file_service.dart';
 
 class ConfiguratorProvider extends ChangeNotifier {
   final List<DefectModel> _defects = DefectModel.defaults;
@@ -10,6 +14,20 @@ class ConfiguratorProvider extends ChangeNotifier {
   final HistogramConfig _histogramConfig = HistogramConfig();
   final List<OutputModel> _outputs = OutputModel.defaults;
   final List<ConfigurationModel> _configurations = [];
+
+  String _programName = '';
+  String _produceName = '';
+  String get programName => _programName;
+  String get produceName => _produceName;
+  void setProgramName(String v) {
+    _programName = v;
+    notifyListeners();
+  }
+
+  void setProduceName(String v) {
+    _produceName = v;
+    notifyListeners();
+  }
 
   List<DefectModel> get defects => _defects;
   HistogramConfig get histogramConfig => _histogramConfig;
@@ -55,6 +73,17 @@ class ConfiguratorProvider extends ChangeNotifier {
     return _defectFrequencies[defectKey]?[index] ?? 0.0;
   }
 
+  double _computeHistogramThreshold(String defectId) {
+    final freqs = _defectFrequencies[defectId];
+    if (freqs == null || freqs.isEmpty) return 0;
+    int lastGoodBand = -1;
+    for (int i = 0; i < _histogramNoOfBands; i++) {
+      if ((freqs[i] ?? 0) > 0) lastGoodBand = i;
+    }
+    if (lastGoodBand < 0) return 0;
+    return _histogramMin + (lastGoodBand + 1) * bandSize;
+  }
+
   void setBandFrequency(String defectKey, int index, double value) {
     _defectFrequencies.putIfAbsent(defectKey, () => {});
     _defectFrequencies[defectKey]![index] = value < 0 ? 0.0 : value;
@@ -66,11 +95,8 @@ class ConfiguratorProvider extends ChangeNotifier {
   void initDefectFrequencies(String defectKey) {
     if (_defectFrequencies.containsKey(defectKey)) return;
     _defectFrequencies[defectKey] = {};
-    final mid = _histogramNoOfBands ~/ 2;
     for (int i = 0; i < _histogramNoOfBands; i++) {
-      final dist = (i - mid).abs();
-      _defectFrequencies[defectKey]![i] =
-          ((mid + 1 - dist) * 12).toDouble().clamp(5, 60);
+      _defectFrequencies[defectKey]![i] = (_histogramNoOfBands - i).toDouble();
     }
     notifyListeners();
   }
@@ -409,28 +435,142 @@ class ConfiguratorProvider extends ChangeNotifier {
   String exportJSON() {
     final sb = StringBuffer();
     sb.writeln('{');
-    sb.writeln('  "Combinations": [');
-    for (final dk in definitions) {
-      final outlets = _comboOutlets[dk]?.toList() ?? [];
+
+    // Program info
+    sb.writeln('  "ProgramName": "${_programName}",');
+    sb.writeln('  "ProduceName": "${_produceName}",');
+    sb.writeln('  "DeleteEnable": false,');
+
+    // ColourGrades
+    sb.writeln('  "ColourGrades": {');
+    sb.writeln('    "ColourGradeTable": [');
+    for (int i = 0; i < _colourGrades.colourGradeTable.length; i++) {
+      final cg = _colourGrades.colourGradeTable[i];
+      sb.writeln('      {');
+      sb.writeln('        "ColourGradeName": "${cg.colourGradeName}",');
+      sb.writeln('        "Colour": {');
+      sb.writeln('          "ColourRange": [');
+      for (int j = 0; j < cg.colour.colourRange.length; j++) {
+        final r = cg.colour.colourRange[j];
+        sb.writeln('            {');
+        sb.writeln('              "Name": "${r.name}",');
+        sb.writeln('              "ColourPercent": {');
+        sb.writeln(
+            '                "Min": ${r.colourPercent.min}, "Max": ${r.colourPercent.max}');
+        sb.writeln('              }');
+        sb.writeln(
+            '            }${j < cg.colour.colourRange.length - 1 ? "," : ""}');
+      }
+      sb.writeln('          ]');
+      sb.writeln('        }');
+      sb.writeln(
+          '      }${i < _colourGrades.colourGradeTable.length - 1 ? "," : ""}');
+    }
+    sb.writeln('    ]');
+    sb.writeln('  },');
+
+    // SizeGrades
+    sb.writeln('  "SizeGrades": {');
+    if (_sizeGrades.sizeClassification != null) {
+      sb.writeln(
+          '    "SizeClassification": "${_sizeGrades.sizeClassification}",');
+    }
+    sb.writeln('    "SizeGradeTable": [');
+    for (int i = 0; i < _sizeGrades.sizeGradeTable.length; i++) {
+      final sg = _sizeGrades.sizeGradeTable[i];
+      sb.writeln('      {');
+      sb.writeln('        "Name": "${sg.name}",');
+      sb.writeln('        "Min": ${sg.min},');
+      sb.writeln('        "Max": ${sg.max}');
+      sb.writeln(
+          '      }${i < _sizeGrades.sizeGradeTable.length - 1 ? "," : ""}');
+    }
+    sb.writeln('    ]');
+    sb.writeln('  },');
+
+    // WeightGrades
+    sb.writeln('  "WeightGrades": {');
+    sb.writeln('    "WeightGradeTable": [');
+    for (int i = 0; i < _weightGrades.weightGradeTable.length; i++) {
+      final wg = _weightGrades.weightGradeTable[i];
+      sb.writeln('      {');
+      sb.writeln('        "Name": "${wg.name}",');
+      sb.writeln('        "Min": ${wg.min},');
+      sb.writeln('        "Max": ${wg.max}');
+      sb.writeln(
+          '      }${i < _weightGrades.weightGradeTable.length - 1 ? "," : ""}');
+    }
+    sb.writeln('    ]');
+    sb.writeln('  },');
+
+    // FeatureTable
+    sb.writeln('  "FeatureTable": [');
+    for (int i = 0; i < _selectedDefectIds.length; i++) {
+      final defectId = _selectedDefectIds.elementAt(i);
+      final d = _defects.firstWhere((x) => x.id == defectId);
+      final xThresh = _computeHistogramThreshold(defectId);
+      final featureName = d.name.toLowerCase().replaceAll(' ', '');
       sb.writeln('    {');
-      sb.writeln('      "Combination": "$dk",');
-      sb.writeln('      "CombinationLabel": "${comboLabel(dk)}",');
-      sb.writeln('      "OutletMapping": [${outlets.join(',')}]');
-      sb.writeln('    },');
+      sb.writeln('      "FeatureName": "$featureName",');
+      sb.writeln('      "No(1)/TotalUnit(2)/Histogram(3)": 3,');
+      sb.writeln('      "FeatureGradeTable": [');
+      sb.writeln('        {');
+      sb.writeln('          "FeatureGradeName": "Defective",');
+      sb.writeln('          "ValueMin": $xThresh,');
+      sb.writeln('          "ValueMax": 10000,');
+      sb.writeln('          "BandMin": 0,');
+      sb.writeln('          "BandMax": 0');
+      sb.writeln('        },');
+      sb.writeln('        {');
+      sb.writeln('          "FeatureGradeName": "Good",');
+      sb.writeln('          "ValueMin": 0,');
+      sb.writeln('          "ValueMax": $xThresh,');
+      sb.writeln('          "BandMin": 0,');
+      sb.writeln('          "BandMax": 0');
+      sb.writeln('        }');
+      sb.writeln('      ]');
+      sb.writeln('    }${i < _selectedDefectIds.length - 1 ? "," : ""}');
     }
     sb.writeln('  ],');
+
+    // SpectroFeatureTable
+    sb.writeln('  "SpectroFeatureTable": [],');
+
+    // OutletMapping
     sb.writeln('  "OutletMapping": [');
-    for (final n in [1, 2, 3]) {
+    final outletNumbers = <int>{};
+    for (final entry in _comboOutlets.entries) {
+      outletNumbers.addAll(entry.value);
+    }
+    final sortedOutlets = outletNumbers.toList()..sort();
+    for (int oi = 0; oi < sortedOutlets.length; oi++) {
+      final n = sortedOutlets[oi];
       final combos = combosForOutlet(n);
       sb.writeln('    {');
-      sb.writeln('      "OutletNumber": $n,');
       sb.writeln('      "OutletDescription": "Outlet $n",');
-      sb.writeln('      "Combinations": [');
-      for (final dk in combos) {
-        sb.writeln('        "$dk",');
+      sb.writeln('      "FeatureCombinations": [');
+      for (int ci = 0; ci < combos.length; ci++) {
+        final dk = combos[ci];
+        final tokens = dk.split('|');
+        final features = tokens.map((t) {
+          final parts = t.split('=');
+          final defectModel = _defects.firstWhere((x) => x.id == parts[0]);
+          return '${defectModel.name.toLowerCase().replaceAll(' ', '')} - ${parts[1]}';
+        }).toList();
+        sb.writeln('        {');
+        sb.writeln('          "Color": "${_comboColour[dk] ?? ""}",');
+        sb.writeln('          "Size": "${_comboSize[dk] ?? ""}",');
+        sb.writeln('          "Weight": "${_comboWeight[dk] ?? ""}",');
+        sb.writeln('          "Features": [');
+        for (int fi = 0; fi < features.length; fi++) {
+          sb.writeln(
+              '            "${features[fi]}"${fi < features.length - 1 ? "," : ""}');
+        }
+        sb.writeln('          ]');
+        sb.writeln('        }${ci < combos.length - 1 ? "," : ""}');
       }
       sb.writeln('      ]');
-      sb.writeln('    },');
+      sb.writeln('    }${oi < sortedOutlets.length - 1 ? "," : ""}');
     }
     sb.writeln('  ]');
     sb.writeln('}');
@@ -692,24 +832,38 @@ class ConfiguratorProvider extends ChangeNotifier {
     }
   }
 
+  void _clearAssignments() {
+    _comboOutlets.clear();
+    _comboColour.clear();
+    _comboSize.clear();
+    _comboWeight.clear();
+    _defThresholds.clear();
+    _currentDefKey = null;
+    _savedDefects.clear();
+    _defectFrequencies.clear();
+  }
+
   // Defects
   void toggleDefect(String id) {
     if (_selectedDefectIds.contains(id))
       _selectedDefectIds.remove(id);
     else
       _selectedDefectIds.add(id);
+    _clearAssignments();
     _isSaved = false;
     notifyListeners();
   }
 
   void selectAllDefects() {
     _selectedDefectIds.addAll(_defects.map((d) => d.id));
+    _clearAssignments();
     _isSaved = false;
     notifyListeners();
   }
 
   void clearSelection() {
     _selectedDefectIds.clear();
+    _clearAssignments();
     _isSaved = false;
     notifyListeners();
   }
@@ -720,6 +874,7 @@ class ConfiguratorProvider extends ChangeNotifier {
     for (final d in _defects) {
       if (!s.contains(d.id)) _selectedDefectIds.add(d.id);
     }
+    _clearAssignments();
     _isSaved = false;
     notifyListeners();
   }
@@ -768,8 +923,30 @@ class ConfiguratorProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void loadVisionFeatures(List<FeatureClass> features) {
+    _defects.clear();
+    for (int i = 0; i < features.length; i++) {
+      final f = features[i];
+      final id = 'F${(i + 1).toString().padLeft(2, '0')}';
+      _defects.add(DefectModel(
+        id: id,
+        name: _capitalize(f.featureName),
+        category: 'Vision Defect',
+        description: '${f.featureName} (${f.measuringAttributes.units}: '
+            '${f.measuringAttributes.measurementMin}-${f.measuringAttributes.measurementMax})',
+      ));
+    }
+    notifyListeners();
+  }
+
+  String _capitalize(String s) {
+    if (s.isEmpty) return s;
+    return s[0].toUpperCase() + s.substring(1);
+  }
+
   // Save
-  void saveConfiguration() {
+  Future<void> saveConfiguration(
+      {String programName = '', String produceName = ''}) async {
     final defect = _defects.firstWhere((d) => _selectedDefectIds.contains(d.id),
         orElse: () => _defects.first);
     final config = ConfigurationModel(
@@ -784,12 +961,226 @@ class ConfiguratorProvider extends ChangeNotifier {
     _configurations.add(config);
     defect.configured = true;
     _isSaved = true;
+
+    final featureEntries = <FeatureEntry>[];
+    for (final defectId in _selectedDefectIds) {
+      final d = _defects.firstWhere((x) => x.id == defectId);
+      final featureName = d.name.toLowerCase().replaceAll(' ', '');
+      final xThresh = _computeHistogramThreshold(defectId);
+      final grades = <FeatureGrade>[
+        FeatureGrade(
+          featureGradeName: 'Defective',
+          valueMin: xThresh,
+          valueMax: 10000,
+        ),
+        FeatureGrade(
+          featureGradeName: 'Good',
+          valueMin: 0,
+          valueMax: xThresh,
+        ),
+      ];
+      featureEntries.add(FeatureEntry(
+        featureName: featureName,
+        gradingMode: 3,
+        featureGradeTable: grades,
+      ));
+    }
+
+    final outletMappingList = <OutletMapping>[];
+    for (final n in [1, 2, 3]) {
+      final combos = combosForOutlet(n);
+      if (combos.isEmpty) continue;
+      final fcList = combos.map((dk) {
+        final tokens = dk.split('|');
+        final features = tokens.map((t) {
+          final parts = t.split('=');
+          final defectModel = _defects.firstWhere((x) => x.id == parts[0]);
+          return '${defectModel.name.toLowerCase().replaceAll(' ', '')} - ${parts[1]}';
+        }).toList();
+        return FeatureCombination(
+          color: _comboColour[dk] ?? '',
+          size: _comboSize[dk] ?? '',
+          weight: _comboWeight[dk] ?? '',
+          features: features,
+        );
+      }).toList();
+      outletMappingList.add(OutletMapping(
+        outletDescription: 'Outlet $n',
+        featureCombinations: fcList,
+      ));
+    }
+
+    final program = ProgramModel(
+      programName: programName.isNotEmpty ? programName : 'Untitled',
+      produceName: produceName,
+      deleteEnable: false,
+      colourGrades: _colourGrades,
+      sizeGrades: _sizeGrades,
+      weightGrades: _weightGrades,
+      featureTable: featureEntries,
+      outletMapping: outletMappingList,
+    );
+
+    final jsonStr =
+        const JsonEncoder.withIndent('  ').convert(program.toJson());
+    try {
+      final fileName = programName.isNotEmpty ? programName : 'Untitled';
+      await saveProgramFile(fileName, jsonStr);
+    } catch (e) {
+      debugPrint('Failed to save program file: $e');
+    }
+
     notifyListeners();
   }
 
   void deleteConfig(String id) {
     _configurations.removeWhere((c) => c.id == id);
     notifyListeners();
+  }
+
+  // =================== Colour / Size / Weight Grades ===================
+
+  ColourGrades _colourGrades = ColourGrades(colourGradeTable: []);
+  SizeGrades _sizeGrades = SizeGrades(sizeGradeTable: []);
+  WeightGrades _weightGrades = WeightGrades(weightGradeTable: []);
+
+  ColourGrades get colourGrades => _colourGrades;
+  SizeGrades get sizeGrades => _sizeGrades;
+  WeightGrades get weightGrades => _weightGrades;
+
+  List<String> get colourGradeNames =>
+      _colourGrades.colourGradeTable.map((c) => c.colourGradeName).toList();
+  List<String> get sizeGradeNames =>
+      _sizeGrades.sizeGradeTable.map((s) => s.name).toList();
+  List<String> get weightGradeNames =>
+      _weightGrades.weightGradeTable.map((w) => w.name).toList();
+
+  // Per-combo colour/size/weight grade assignment: definitionKey -> grade name
+  final Map<String, String> _comboColour = {};
+  final Map<String, String> _comboSize = {};
+  final Map<String, String> _comboWeight = {};
+
+  Map<String, String> get comboColour => _comboColour;
+  Map<String, String> get comboSize => _comboSize;
+  Map<String, String> get comboWeight => _comboWeight;
+
+  String comboColourFor(String defKey) => _comboColour[defKey] ?? '';
+  String comboSizeFor(String defKey) => _comboSize[defKey] ?? '';
+  String comboWeightFor(String defKey) => _comboWeight[defKey] ?? '';
+
+  void setComboColour(String defKey, String grade) {
+    if (grade.isEmpty)
+      _comboColour.remove(defKey);
+    else
+      _comboColour[defKey] = grade;
+    _isSaved = false;
+    notifyListeners();
+  }
+
+  void setComboSize(String defKey, String grade) {
+    if (grade.isEmpty)
+      _comboSize.remove(defKey);
+    else
+      _comboSize[defKey] = grade;
+    _isSaved = false;
+    notifyListeners();
+  }
+
+  void setComboWeight(String defKey, String grade) {
+    if (grade.isEmpty)
+      _comboWeight.remove(defKey);
+    else
+      _comboWeight[defKey] = grade;
+    _isSaved = false;
+    notifyListeners();
+  }
+
+  // Colour grade CRUD
+  void addColourGrade(String name) {
+    _colourGrades.colourGradeTable.add(ColourGradeTable(
+      colourGradeName: name,
+      colour: Colour(colourRange: ColourRange.defaults),
+    ));
+    _isSaved = false;
+    notifyListeners();
+  }
+
+  void removeColourGrade(int index) {
+    if (index >= 0 && index < _colourGrades.colourGradeTable.length) {
+      _colourGrades.colourGradeTable.removeAt(index);
+      _isSaved = false;
+      notifyListeners();
+    }
+  }
+
+  void updateColourGradeName(int index, String name) {
+    if (index >= 0 && index < _colourGrades.colourGradeTable.length) {
+      _colourGrades.colourGradeTable[index].colourGradeName = name;
+      _isSaved = false;
+      notifyListeners();
+    }
+  }
+
+  void updateColourRange(
+      int gradeIndex, int rangeIndex, double min, double max) {
+    if (gradeIndex >= 0 && gradeIndex < _colourGrades.colourGradeTable.length) {
+      final range =
+          _colourGrades.colourGradeTable[gradeIndex].colour.colourRange;
+      if (rangeIndex >= 0 && rangeIndex < range.length) {
+        range[rangeIndex].colourPercent.min = min;
+        range[rangeIndex].colourPercent.max = max;
+        _isSaved = false;
+        notifyListeners();
+      }
+    }
+  }
+
+  // Size grade CRUD
+  void addSizeGrade(String name, double min, double max) {
+    _sizeGrades.sizeGradeTable
+        .add(SizeGradeTable(name: name, min: min, max: max));
+    _isSaved = false;
+    notifyListeners();
+  }
+
+  void removeSizeGrade(int index) {
+    if (index >= 0 && index < _sizeGrades.sizeGradeTable.length) {
+      _sizeGrades.sizeGradeTable.removeAt(index);
+      _isSaved = false;
+      notifyListeners();
+    }
+  }
+
+  void updateSizeGrade(int index, String name, double min, double max) {
+    if (index >= 0 && index < _sizeGrades.sizeGradeTable.length) {
+      _sizeGrades.sizeGradeTable[index].name = name;
+      _sizeGrades.sizeGradeTable[index].min = min;
+      _sizeGrades.sizeGradeTable[index].max = max;
+      _isSaved = false;
+      notifyListeners();
+    }
+  }
+
+  void setSizeClassification(String v) {
+    _sizeGrades.sizeClassification = v;
+    _isSaved = false;
+    notifyListeners();
+  }
+
+  // Weight grade CRUD
+  void addWeightGrade(String name, double min, double max) {
+    _weightGrades.weightGradeTable
+        .add(WeightGradeTable(name: name, min: min, max: max));
+    _isSaved = false;
+    notifyListeners();
+  }
+
+  void removeWeightGrade(int index) {
+    if (index >= 0 && index < _weightGrades.weightGradeTable.length) {
+      _weightGrades.weightGradeTable.removeAt(index);
+      _isSaved = false;
+      notifyListeners();
+    }
   }
 
   // Login

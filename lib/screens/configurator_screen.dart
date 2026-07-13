@@ -3,8 +3,10 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import '../theme/app_theme.dart';
 import '../providers/configurator_provider.dart';
+import '../providers/program_config_provider.dart';
 import '../widgets/step_indicator.dart';
 import '../widgets/login_dropdown.dart';
+import '../widgets/program_config_step.dart';
 import '../widgets/defects_step.dart';
 import '../widgets/histogram_step.dart';
 import '../widgets/outlets_step.dart';
@@ -21,17 +23,18 @@ class _ConfiguratorScreenState extends State<ConfiguratorScreen> {
   int _currentStep = 0;
 
   static const _labels = [
+    'Program',
     'Defects',
     'Histogram',
-    'Outlet Assignment',
-    'Review & Save'
+    'Outlet',
+    'Review'
   ];
-  static const _totalSteps = 4;
+  static const _totalSteps = 5;
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ConfiguratorProvider>(
-      builder: (context, p, _) {
+    return Consumer2<ConfiguratorProvider, ProgramConfigProvider>(
+      builder: (context, configP, programP, _) {
         return Scaffold(
           backgroundColor: AppTheme.mainBg,
           body: SafeArea(
@@ -41,7 +44,7 @@ class _ConfiguratorScreenState extends State<ConfiguratorScreen> {
                 final narrow = w < 768;
                 return Column(
                   children: [
-                    _topBar(context, p, narrow),
+                    _topBar(context, configP, programP, narrow),
                     Expanded(child: _stepContent()),
                   ],
                 );
@@ -53,7 +56,8 @@ class _ConfiguratorScreenState extends State<ConfiguratorScreen> {
     );
   }
 
-  Widget _topBar(BuildContext context, ConfiguratorProvider p, bool narrow) {
+  Widget _topBar(BuildContext context, ConfiguratorProvider p,
+      ProgramConfigProvider pp, bool narrow) {
     final h = narrow ? 68.0 : 84.0;
     final logoH = narrow ? 40.0 : 52.0;
     final gap = narrow ? 6.0 : 12.0;
@@ -76,20 +80,36 @@ class _ConfiguratorScreenState extends State<ConfiguratorScreen> {
         const SizedBox(width: 8),
         if (!narrow)
           _navBtn('< Back', _currentStep > 0, () {
-            if (_currentStep == 2) p.markAllDefectsSaved();
+            if (_currentStep == 1) p.markAllDefectsSaved();
             setState(() => _currentStep--);
           }),
         if (!narrow) const SizedBox(width: 6),
         _navBtn(
             narrow
-                ? (_currentStep == 3 ? 'S' : '>')
-                : (_currentStep == 3 ? 'Save' : 'Next >'),
-            _nextEnabled(p), () {
-          if (_currentStep == 0) p.markAllDefectsSaved();
-          if (_currentStep == 3) {
-            Provider.of<ConfiguratorProvider>(context, listen: false)
-                .saveConfiguration();
+                ? (_currentStep == 4 ? 'S' : '>')
+                : (_currentStep == 4 ? 'Save' : 'Next >'),
+            _nextEnabled(p, pp), () {
+          if (_currentStep == 4) {
+            final pp =
+                Provider.of<ProgramConfigProvider>(context, listen: false);
+            final cp =
+                Provider.of<ConfiguratorProvider>(context, listen: false);
+            cp.setProgramName(pp.programName);
+            cp.setProduceName(pp.produceName);
+            cp.saveConfiguration(
+                programName: pp.programName, produceName: pp.produceName);
           } else {
+            if (_currentStep == 0 || _currentStep == 1) {
+              final cp =
+                  Provider.of<ConfiguratorProvider>(context, listen: false);
+              cp.setProgramName(pp.programName);
+              cp.setProduceName(pp.produceName);
+            }
+            if (_currentStep == 0) {
+              Provider.of<ConfiguratorProvider>(context, listen: false)
+                  .loadVisionFeatures(pp.visionFeatures);
+            }
+            if (_currentStep == 1) p.markAllDefectsSaved();
             setState(() => _currentStep++);
           }
         }),
@@ -123,24 +143,27 @@ class _ConfiguratorScreenState extends State<ConfiguratorScreen> {
     );
   }
 
-  bool _nextEnabled(ConfiguratorProvider p) {
-    if (_currentStep == 0) return p.canProceedFromDefects;
-    if (_currentStep == 1) return p.canProceedFromHistogram;
+  bool _nextEnabled(ConfiguratorProvider p, ProgramConfigProvider pp) {
+    if (_currentStep == 0) return pp.canProceed;
+    if (_currentStep == 1) return p.canProceedFromDefects;
+    if (_currentStep == 2) return p.canProceedFromHistogram;
     return true;
   }
 
   Widget _stepContent() {
     switch (_currentStep) {
       case 0:
-        return const DefectsStep();
+        return const ProgramConfigStep();
       case 1:
-        return const HistogramStep();
+        return const DefectsStep();
       case 2:
-        return const OutletsStep();
+        return const HistogramStep();
       case 3:
+        return const OutletsStep();
+      case 4:
         return const PreviewStep();
       default:
-        return const DefectsStep();
+        return const ProgramConfigStep();
     }
   }
 }

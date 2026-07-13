@@ -1,0 +1,38 @@
+{
+  "ProgramName": "PROGRAMM3",
+  "ProduceName": "Apple",
+  "DeleteEnable": false,
+  "ColourGrades": {
+    "ColourGradeTable": []
+  },
+  "SizeGrades": {
+    "SizeGradeTable": []
+  },
+  "WeightGrades": {
+    "WeightGradeTable": []
+  },
+  "FeatureTable": [
+    {
+      "FeatureName": "apple",
+      "No(1)/TotalUnit(2)/Histogram(3)": 3,
+      "FeatureGradeTable": [
+        {
+          "FeatureGradeName": "Defective",
+          "ValueMin": 120,
+          "ValueMax": 10000,
+          "BandMin": 0,
+          "BandMax": 0
+        },
+        {
+          "FeatureGradeName": "Good",
+          "ValueMin": 0,
+          "ValueMax": 120,
+          "BandMin": 0,
+          "BandMax": 0
+        }
+      ]
+    }
+  ],
+  "SpectroFeatureTable": [],
+  "OutletMapping": []
+}

@@ -1,0 +1,65 @@
+{
+  "ProgramName": "poorva",
+  "ProduceName": "Orange",
+  "DeleteEnable": false,
+  "ColourGrades": {
+    "ColourGradeTable": []
+  },
+  "SizeGrades": {
+    "SizeGradeTable": []
+  },
+  "WeightGrades": {
+    "WeightGradeTable": []
+  },
+  "FeatureTable": [
+    {
+      "FeatureName": "rindandthrip",
+      "No(1)/TotalUnit(2)/Histogram(3)": 3,
+      "FeatureGradeTable": [
+        {
+          "FeatureGradeName": "Defective",
+          "ValueMin": 120,
+          "ValueMax": 10000,
+          "BandMin": 0,
+          "BandMax": 0
+        },
+        {
+          "FeatureGradeName": "Good",
+          "ValueMin": 0,
+          "ValueMax": 120,
+          "BandMin": 0,
+          "BandMax": 0
+        }
+      ]
+    }
+  ],
+  "SpectroFeatureTable": [],
+  "OutletMapping": [
+    {
+      "OutletDescription": "Outlet 1",
+      "FeatureCombinations": [
+        {
+          "Color": "",
+          "Size": "",
+          "Weight": "",
+          "Features": [
+            "rindandthrip - Good"
+          ]
+        }
+      ]
+    },
+    {
+      "OutletDescription": "Outlet 3",
+      "FeatureCombinations": [
+        {
+          "Color": "",
+          "Size": "",
+          "Weight": "",
+          "Features": [
+            "rindandthrip - Bad"
+          ]
+        }
+      ]
+    }
+  ]
+}
