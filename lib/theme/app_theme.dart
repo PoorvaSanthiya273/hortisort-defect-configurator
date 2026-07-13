@@ -5,7 +5,7 @@ class AppTheme {
   static const Color bg = Color(0xFF0F1115);
   static const Color cardPrimary = Color(0xFF1A2433);
   static const Color cardSecondary = Color(0xFF202B3D);
-  static const Color hortisortGreen = Color(0xFF4CAF50);
+  static const Color hortisortGreen = Color(0xFFA6CE39);
   static const Color infoBlue = Color(0xFF4DA3FF);
   static const Color success = Color(0xFF4CAF50);
   static const Color warning = Color(0xFFF9A825);
@@ -26,11 +26,8 @@ class AppTheme {
   static const Color orangeBar = warning;
   static const Color stopRed = danger;
   static const Color goodFill = Color(0xFF1F6B3A);
-  static const Color goodText = Color(0xFF7FE3A0);
   static const Color mixedFill = Color(0xFF5B4A1E);
-  static const Color mixedText = Color(0xFFF5D060);
   static const Color badFill = Color(0xFF7A1F2B);
-  static const Color badText = Color(0xFFF08090);
 
   // Shadow / glow / hover utilities
   static List<BoxShadow> get cardShadow => [
