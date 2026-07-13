@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/configurator_provider.dart';
+import '../theme/app_theme.dart';
 
 class HistogramStep extends StatefulWidget {
   const HistogramStep({super.key});
@@ -77,7 +78,7 @@ class _HistogramStepState extends State<HistogramStep> {
                               borderRadius: BorderRadius.circular(6),
                               border: Border.all(
                                 color: isSelected
-                                    ? const Color(0xFF8DAA00)
+                                    ? AppTheme.hortisortGreen
                                     : const Color(0xFF4A4A4A),
                               ),
                             ),
@@ -87,7 +88,7 @@ class _HistogramStepState extends State<HistogramStep> {
                                 height: 24,
                                 decoration: BoxDecoration(
                                   color: isSelected
-                                      ? const Color(0xFF8DAA00)
+                                      ? AppTheme.hortisortGreen
                                       : Colors.transparent,
                                   borderRadius: BorderRadius.circular(3),
                                 ),
@@ -99,7 +100,7 @@ class _HistogramStepState extends State<HistogramStep> {
                                         fontSize: 12,
                                         fontWeight: FontWeight.w600,
                                         color: isSelected
-                                            ? const Color(0xFF8DAA00)
+                                            ? AppTheme.hortisortGreen
                                             : const Color(0xFFFFFFFF))),
                               ),
                             ]),
@@ -141,7 +142,7 @@ class _HistogramStepState extends State<HistogramStep> {
                         const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
                       color: _saved
-                          ? const Color(0xFF8DAA00).withValues(alpha: 0.2)
+                          ? AppTheme.hortisortGreen.withValues(alpha: 0.2)
                           : const Color(0xFF4A4A4A),
                       borderRadius: BorderRadius.circular(4),
                     ),
@@ -151,14 +152,14 @@ class _HistogramStepState extends State<HistogramStep> {
                         Icon(_saved ? Icons.check_circle : Icons.save,
                             size: 14,
                             color: _saved
-                                ? const Color(0xFF8DAA00)
+                                ? AppTheme.hortisortGreen
                                 : const Color(0xFFFFFFFF)),
                         const SizedBox(width: 4),
                         Text(_saved ? 'Saved!' : 'Save',
                             style: TextStyle(
                                 fontSize: 14,
                                 color: _saved
-                                    ? const Color(0xFF8DAA00)
+                                    ? AppTheme.hortisortGreen
                                     : const Color(0xFFFFFFFF),
                                 fontWeight: FontWeight.w600)),
                       ],
@@ -439,9 +440,9 @@ class _DraggableBarState extends State<_DraggableBar> {
     final barHeight = widget.maxFrequency > 0
         ? (_currentFrequency / widget.maxFrequency) * available
         : 0.0;
-    final borderColor = const Color(0xFF8DAA00);
+    final borderColor = AppTheme.hortisortGreen;
     final barBg = _isDragging
-        ? const Color(0xFF8DAA00).withValues(alpha: 0.3)
+        ? AppTheme.hortisortGreen.withValues(alpha: 0.3)
         : const Color(0xFFFFFFFF);
 
     return ClipRect(
@@ -481,11 +482,14 @@ class _DraggableBarState extends State<_DraggableBar> {
                         contentPadding:
                             EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                         border: OutlineInputBorder(
-                            borderSide: BorderSide(color: Color(0xFF8DAA00))),
+                            borderSide:
+                                BorderSide(color: AppTheme.hortisortGreen)),
                         enabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Color(0xFF8DAA00))),
+                            borderSide:
+                                BorderSide(color: AppTheme.hortisortGreen)),
                         focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Color(0xFF8DAA00))),
+                            borderSide:
+                                BorderSide(color: AppTheme.hortisortGreen)),
                       ),
                       onSubmitted: (_) => _commitEdit(),
                     ),
@@ -501,7 +505,8 @@ class _DraggableBarState extends State<_DraggableBar> {
                       ),
                     ),
                   ),
-            const Icon(Icons.arrow_upward, size: 14, color: Color(0xFF8DAA00)),
+            const Icon(Icons.arrow_upward,
+                size: 14, color: AppTheme.hortisortGreen),
             const SizedBox(height: 4),
             Container(
               width: double.infinity,

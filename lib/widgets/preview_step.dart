@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/configurator_provider.dart';
 import '../providers/program_config_provider.dart';
+import '../theme/app_theme.dart';
 import '../services/file_service.dart';
 
 class PreviewStep extends StatefulWidget {
@@ -53,7 +54,7 @@ class _PreviewStepState extends State<PreviewStep> {
                   const SnackBar(
                     content: Row(children: [
                       Icon(Icons.check_circle,
-                          color: Color(0xFF8DAA00), size: 18),
+                          color: AppTheme.hortisortGreen, size: 18),
                       SizedBox(width: 8),
                       Text('JSON exported!',
                           style: TextStyle(fontSize: 14, color: Colors.white)),
@@ -73,7 +74,7 @@ class _PreviewStepState extends State<PreviewStep> {
                 const SnackBar(
                   content: Row(children: [
                     Icon(Icons.check_circle,
-                        color: Color(0xFF8DAA00), size: 18),
+                        color: AppTheme.hortisortGreen, size: 18),
                     SizedBox(width: 8),
                     Text('Configuration saved!',
                         style: TextStyle(fontSize: 14, color: Colors.white)),
@@ -91,11 +92,10 @@ class _PreviewStepState extends State<PreviewStep> {
             _stat('Total', Icons.assignment, defs.length.toString(),
                 const Color(0xFF42A5F5)),
             _stat('Good', Icons.check_circle, p.goodCount.toString(),
-                const Color(0xFF8DAA00)),
+                AppTheme.hortisortGreen),
             _stat('Slightly Bad', Icons.warning_amber, p.sbCount.toString(),
                 const Color(0xFFF5A000)),
-            _stat('Bad', Icons.cancel, p.badCount.toString(),
-                const Color(0xFF6B1605)),
+            _stat('Bad', Icons.cancel, p.badCount.toString(), AppTheme.danger),
             _stat('Unassigned', Icons.help, unassigned.length.toString(),
                 const Color(0xFF9C27B0)),
           ]),
@@ -142,10 +142,10 @@ class _PreviewStepState extends State<PreviewStep> {
   Widget _outletTile(int n, ConfiguratorProvider p) {
     final combos = p.combosForOutlet(n);
     final borderColor = n == 1
-        ? const Color(0xFF8DAA00)
+        ? AppTheme.hortisortGreen
         : n == 2
             ? const Color(0xFFF5A000)
-            : const Color(0xFF6B1605);
+            : AppTheme.danger;
     final expanded = _expanded.contains(n);
 
     return Container(
@@ -244,7 +244,7 @@ class _PreviewStepState extends State<PreviewStep> {
             color: const Color(0xFF4A4A4A),
             borderRadius: BorderRadius.circular(5),
             border: Border(
-                left: BorderSide(color: const Color(0xFF8DAA00), width: 2))),
+                left: BorderSide(color: AppTheme.hortisortGreen, width: 2))),
         child: Row(children: [
           Expanded(
               child: Text(p.comboLabel(dk),
@@ -258,7 +258,7 @@ class _PreviewStepState extends State<PreviewStep> {
                   style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF8DAA00)))),
+                      color: AppTheme.hortisortGreen))),
         ]),
       ),
     );

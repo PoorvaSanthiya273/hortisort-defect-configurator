@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/configurator_provider.dart';
+import '../theme/app_theme.dart';
 
 class LoginDropdown extends StatefulWidget {
   const LoginDropdown({super.key});
@@ -31,16 +32,17 @@ class _LoginDropdownState extends State<LoginDropdown> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                  color: const Color(0xFF8DAA00).withValues(alpha: 0.15),
+                  color: AppTheme.hortisortGreen.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(4),
                   border: Border.all(
-                      color: const Color(0xFF8DAA00).withValues(alpha: 0.3))),
+                      color: AppTheme.hortisortGreen.withValues(alpha: 0.3))),
               child: Row(mainAxisSize: MainAxisSize.min, children: [
-                const Icon(Icons.person, size: 14, color: Color(0xFF8DAA00)),
+                const Icon(Icons.person,
+                    size: 14, color: AppTheme.hortisortGreen),
                 const SizedBox(width: 4),
                 Text(p.role,
                     style: const TextStyle(
-                        color: Color(0xFF8DAA00),
+                        color: AppTheme.hortisortGreen,
                         fontSize: 10,
                         fontWeight: FontWeight.w500)),
               ]),
@@ -57,7 +59,7 @@ class _LoginDropdownState extends State<LoginDropdown> {
                 shape: BoxShape.circle,
                 color: const Color(0xFF4A4A4A),
                 border: Border.all(
-                    color: const Color(0xFF8DAA00).withValues(alpha: 0.3))),
+                    color: AppTheme.hortisortGreen.withValues(alpha: 0.3))),
             child: const Icon(Icons.person_outline,
                 size: 16, color: Color(0xFFD8D8D8)),
           ),
@@ -77,7 +79,7 @@ class _LoginDropdownState extends State<LoginDropdown> {
           child: Column(mainAxisSize: MainAxisSize.min, children: [
             const Text('LOGIN',
                 style: TextStyle(
-                    color: Color(0xFF8DAA00),
+                    color: AppTheme.hortisortGreen,
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 2)),
@@ -109,7 +111,7 @@ class _LoginDropdownState extends State<LoginDropdown> {
                 height: 40,
                 child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF8DAA00),
+                        backgroundColor: AppTheme.hortisortGreen,
                         foregroundColor: const Color(0xFFFFFFFF),
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8)),
@@ -145,6 +147,6 @@ class _LoginDropdownState extends State<LoginDropdown> {
             borderSide: BorderSide.none),
         focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: Color(0xFF8DAA00))));
+            borderSide: const BorderSide(color: AppTheme.hortisortGreen)));
   }
 }

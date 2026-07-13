@@ -1,6 +1,7 @@
 import 'dart:ui' as ui;
 import 'dart:math';
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 
 class DefectImageGen {
   static final Map<String, ui.Image> _cache = {};
@@ -74,7 +75,7 @@ class DefectImageGen {
   }
 
   static void _leaf(Canvas c, Offset o, double r) {
-    final lp = Paint()..color = const Color(0xFF43A047).withValues(alpha: 0.85);
+    final lp = Paint()..color = AppTheme.hortisortGreen.withValues(alpha: 0.85);
     final lpath = Path()
       ..moveTo(o.dx, o.dy - r * 0.6)
       ..quadraticBezierTo(
@@ -91,7 +92,7 @@ class DefectImageGen {
         Offset(o.dx, o.dy - r * 0.5),
         Offset(o.dx, o.dy + r * 0.35),
         Paint()
-          ..color = const Color(0xFF2E7D32)
+          ..color = AppTheme.hortisortGreen
           ..strokeWidth = 1.2);
   }
 

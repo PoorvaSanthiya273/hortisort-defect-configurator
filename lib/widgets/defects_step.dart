@@ -133,7 +133,7 @@ class DefectsStep extends StatelessWidget {
               decoration: BoxDecoration(
                   color: const Color(0xFF4A4A4A),
                   borderRadius: BorderRadius.circular(4),
-                  border: Border.all(color: Color(0xFF8DAA00))),
+                  border: Border.all(color: AppTheme.hortisortGreen)),
               child: Center(
                   child: Text('${p.selectedDefectCount}',
                       style: const TextStyle(
@@ -244,7 +244,7 @@ class DefectsStep extends StatelessWidget {
             child: Text(label,
                 style: const TextStyle(
                     fontSize: 12,
-                    color: Color(0xFF8DAA00),
+                    color: AppTheme.hortisortGreen,
                     fontWeight: FontWeight.w500))));
   }
 
@@ -349,7 +349,7 @@ class _DefectCardState extends State<_DefectCard> {
                                   height: 22,
                                   decoration: const BoxDecoration(
                                       shape: BoxShape.circle,
-                                      color: Color(0xFF8DAA00)),
+                                      color: AppTheme.hortisortGreen),
                                   child: const Icon(Icons.check,
                                       size: 14, color: Colors.white))),
                       ]),
@@ -448,7 +448,7 @@ class _DefectListTile extends StatelessWidget {
                 height: 24,
                 decoration: const BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Color(0xFF8DAA00),
+                  color: AppTheme.hortisortGreen,
                 ),
                 child: const Icon(Icons.check, size: 14, color: Colors.white),
               ),

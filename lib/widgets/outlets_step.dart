@@ -223,13 +223,13 @@ class _OutletsStepState extends State<OutletsStep> {
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(4),
-                        border: Border.all(color: const Color(0xFF8DAA00))),
+                        border: Border.all(color: AppTheme.hortisortGreen)),
                     child: const Text('Select All',
                         style: TextStyle(
-                            fontSize: 14, color: Color(0xFF8DAA00))))),
+                            fontSize: 14, color: AppTheme.hortisortGreen)))),
             const SizedBox(width: 8),
             const Text('Assign →',
-                style: TextStyle(fontSize: 14, color: Color(0xFF8DAA00))),
+                style: TextStyle(fontSize: 14, color: AppTheme.hortisortGreen)),
             const SizedBox(width: 6),
             _assignDropdown(p),
           ]),

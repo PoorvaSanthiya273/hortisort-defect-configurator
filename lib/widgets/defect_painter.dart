@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 
 class DefectPainter extends CustomPainter {
   final String defectId;
@@ -46,7 +47,7 @@ class DefectPainter extends CustomPainter {
   }
 
   void _green(Canvas c, Offset o, double r) {
-    final p = Paint()..color = const Color(0xFF66BB6A).withValues(alpha: 0.6);
+    final p = Paint()..color = AppTheme.hortisortGreen.withValues(alpha: 0.6);
     c.drawCircle(Offset(o.dx + r * 0.25, o.dy - r * 0.15), r * 0.22, p);
     c.drawCircle(Offset(o.dx - r * 0.15, o.dy + r * 0.25), r * 0.18, p);
     c.drawCircle(Offset(o.dx + r * 0.1, o.dy + r * 0.3), r * 0.13, p);
@@ -193,12 +194,12 @@ class DefectPainter extends CustomPainter {
       ..quadraticBezierTo(
           o.dx - r * 0.35, o.dy - r * 0.15, o.dx, o.dy - r * 0.55)
       ..close();
-    c.drawPath(path, Paint()..color = const Color(0xFF66BB6A));
+    c.drawPath(path, Paint()..color = AppTheme.hortisortGreen);
     c.drawLine(
         Offset(o.dx, o.dy - r * 0.45),
         Offset(o.dx, o.dy + r * 0.35),
         Paint()
-          ..color = const Color(0xFF43A047)
+          ..color = AppTheme.hortisortGreen
           ..strokeWidth = 0.8);
   }
 
