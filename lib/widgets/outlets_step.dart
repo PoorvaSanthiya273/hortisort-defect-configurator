@@ -418,17 +418,16 @@ class _OutletsStepState extends State<OutletsStep> {
                   final d = p.selectedDefects.firstWhere((x) => x.id == pts[0]);
                   final isG = pts[1] == 'Good';
                   final fill = isG ? AppTheme.goodFill : AppTheme.badFill;
-                  final textColor = isG ? AppTheme.goodText : AppTheme.badText;
                   return Container(
                     padding:
                         const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
                         color: fill, borderRadius: BorderRadius.circular(4)),
                     child: Text('${d.name}: ${pts[1]}',
-                        style: TextStyle(
+                        style: const TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w700,
-                            color: textColor)),
+                            color: Colors.white)),
                   );
                 }).toList())),
         Expanded(
