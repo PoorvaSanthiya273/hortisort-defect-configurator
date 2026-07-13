@@ -5,7 +5,7 @@ class AppTheme {
   static const Color bg = Color(0xFF0F1115);
   static const Color cardPrimary = Color(0xFF1A2433);
   static const Color cardSecondary = Color(0xFF202B3D);
-  static const Color hortisortGreen = Color(0xFFA6CE39);
+  static const Color hortisortGreen = Color(0xFF4CAF50);
   static const Color infoBlue = Color(0xFF4DA3FF);
   static const Color success = Color(0xFF4CAF50);
   static const Color warning = Color(0xFFF9A825);
