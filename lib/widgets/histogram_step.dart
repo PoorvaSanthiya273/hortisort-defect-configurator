@@ -251,6 +251,12 @@ class _HistogramStepState extends State<HistogramStep> {
                                                 p.setBandFrequency(
                                                     currentKey, index, value);
                                               },
+                                              isSelected: p.isBandSelected(
+                                                  currentKey, index),
+                                              bandClass: p.getBandClass(
+                                                  currentKey, index),
+                                              onTap: () => p.toggleBandSelect(
+                                                  currentKey, index),
                                             ),
                                           );
                                         }),
@@ -295,32 +301,7 @@ class _HistogramStepState extends State<HistogramStep> {
                             color: Color(0xFFFFFFFF))),
                   ),
                   const SizedBox(height: 8),
-                  GestureDetector(
-                    onTap: currentKey != null
-                        ? () => p.resetDefectFrequencies(currentKey)
-                        : null,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: const Color(0xFF4A4A4A)),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.refresh,
-                              size: 14, color: Color(0xFFFFFFFF)),
-                          SizedBox(width: 4),
-                          Text('Reset',
-                              style: TextStyle(
-                                  fontSize: 14,
-                                  color: Color(0xFFFFFFFF),
-                                  fontWeight: FontWeight.w600)),
-                        ],
-                      ),
-                    ),
-                  ),
+                  _buildClassActionBar(p, currentKey),
                 ]),
               ),
             ]),
@@ -328,6 +309,92 @@ class _HistogramStepState extends State<HistogramStep> {
         ]),
       );
     });
+  }
+
+  Widget _buildClassActionBar(ConfiguratorProvider p, String? currentKey) {
+    final count = currentKey != null ? p.selectedBandCount(currentKey) : 0;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 8),
+        const Text('Assign Selected Bands',
+            style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFFFFFFFF))),
+        const SizedBox(height: 2),
+        Text('Select one or more bands on the chart.',
+            style: const TextStyle(fontSize: 11, color: Color(0xFFD8D8D8))),
+        const SizedBox(height: 8),
+        Row(children: [
+          Expanded(
+            child: GestureDetector(
+              onTap: currentKey != null && count > 0
+                  ? () => p.markSelectedGood(currentKey)
+                  : null,
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                    border: Border.all(
+                        color: count > 0
+                            ? AppTheme.hortisortGreen
+                            : const Color(0xFF4A4A4A)),
+                    borderRadius: BorderRadius.circular(4)),
+                child: const Center(
+                    child: Text('Mark as Good',
+                        style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.hortisortGreen))),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: GestureDetector(
+              onTap: currentKey != null && count > 0
+                  ? () => p.markSelectedDefective(currentKey)
+                  : null,
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                    border: Border.all(
+                        color: count > 0
+                            ? AppTheme.danger
+                            : const Color(0xFF4A4A4A)),
+                    borderRadius: BorderRadius.circular(4)),
+                child: const Center(
+                    child: Text('Mark as Defective',
+                        style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.danger))),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: currentKey != null && count > 0
+                ? () => p.clearBandSelection(currentKey)
+                : null,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                  border: Border.all(color: const Color(0xFF4A4A4A)),
+                  borderRadius: BorderRadius.circular(4)),
+              child: const Center(
+                  child: Text('Reset',
+                      style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFFFFFFFF)))),
+            ),
+          ),
+        ]),
+      ],
+    );
   }
 
   Widget _infoChip(String label, String value) {
@@ -363,6 +430,9 @@ class _DraggableBar extends StatefulWidget {
   final double maxFrequency;
   final double maxBarHeight;
   final Function(double) onFrequencyChanged;
+  final bool isSelected;
+  final String? bandClass;
+  final VoidCallback onTap;
 
   const _DraggableBar({
     required this.index,
@@ -370,6 +440,9 @@ class _DraggableBar extends StatefulWidget {
     required this.maxFrequency,
     required this.maxBarHeight,
     required this.onFrequencyChanged,
+    this.isSelected = false,
+    this.bandClass,
+    required this.onTap,
   });
 
   @override
@@ -440,86 +513,118 @@ class _DraggableBarState extends State<_DraggableBar> {
     final barHeight = widget.maxFrequency > 0
         ? (_currentFrequency / widget.maxFrequency) * available
         : 0.0;
-    final borderColor = AppTheme.hortisortGreen;
+    final isGood = widget.bandClass == 'Good';
+    final isDefective = widget.bandClass == 'Defective';
+    final borderColor = isGood
+        ? AppTheme.hortisortGreen
+        : isDefective
+            ? AppTheme.danger
+            : widget.isSelected
+                ? AppTheme.hortisortGreen
+                : const Color(0xFF4A4A4A);
     final barBg = _isDragging
-        ? AppTheme.hortisortGreen.withValues(alpha: 0.3)
-        : const Color(0xFFFFFFFF);
+        ? (isGood
+            ? AppTheme.goodFill
+            : isDefective
+                ? AppTheme.badFill
+                : AppTheme.hortisortGreen.withValues(alpha: 0.3))
+        : isGood
+            ? AppTheme.goodFill
+            : isDefective
+                ? AppTheme.badFill
+                : const Color(0xFFFFFFFF);
+    final barBorderWidth = widget.isSelected ? 2.5 : 1.5;
 
-    return ClipRect(
-      child: GestureDetector(
-        onVerticalDragStart: (_) => setState(() => _isDragging = true),
-        onVerticalDragUpdate: (details) {
-          final delta = -details.primaryDelta! * 0.5;
-          final newValue = _currentFrequency + delta;
-          setState(() {
-            _currentFrequency = newValue < 0 ? 0 : newValue.roundToDouble();
-          });
-          widget.onFrequencyChanged(_currentFrequency);
-        },
-        onVerticalDragEnd: (_) {
-          _currentFrequency = _currentFrequency.roundToDouble();
-          setState(() => _isDragging = false);
-          widget.onFrequencyChanged(_currentFrequency);
-        },
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            _isEditing
-                ? SizedBox(
-                    width: 54,
-                    height: 24,
-                    child: TextField(
-                      controller: _editController,
-                      focusNode: _focusNode,
-                      keyboardType: TextInputType.number,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFFFFFFFF)),
-                      decoration: const InputDecoration(
-                        isDense: true,
-                        contentPadding:
-                            EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                        border: OutlineInputBorder(
-                            borderSide:
-                                BorderSide(color: AppTheme.hortisortGreen)),
-                        enabledBorder: OutlineInputBorder(
-                            borderSide:
-                                BorderSide(color: AppTheme.hortisortGreen)),
-                        focusedBorder: OutlineInputBorder(
-                            borderSide:
-                                BorderSide(color: AppTheme.hortisortGreen)),
+    return GestureDetector(
+      onTap: widget.onTap,
+      child: ClipRect(
+        child: GestureDetector(
+          onVerticalDragStart: (_) => setState(() => _isDragging = true),
+          onVerticalDragUpdate: (details) {
+            final delta = -details.primaryDelta! * 0.5;
+            final newValue = _currentFrequency + delta;
+            setState(() {
+              _currentFrequency = newValue < 0 ? 0 : newValue.roundToDouble();
+            });
+            widget.onFrequencyChanged(_currentFrequency);
+          },
+          onVerticalDragEnd: (_) {
+            _currentFrequency = _currentFrequency.roundToDouble();
+            setState(() => _isDragging = false);
+            widget.onFrequencyChanged(_currentFrequency);
+          },
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              _isEditing
+                  ? SizedBox(
+                      width: 54,
+                      height: 24,
+                      child: TextField(
+                        controller: _editController,
+                        focusNode: _focusNode,
+                        keyboardType: TextInputType.number,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFFFFFFFF)),
+                        decoration: const InputDecoration(
+                          isDense: true,
+                          contentPadding:
+                              EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                          border: OutlineInputBorder(
+                              borderSide:
+                                  BorderSide(color: AppTheme.hortisortGreen)),
+                          enabledBorder: OutlineInputBorder(
+                              borderSide:
+                                  BorderSide(color: AppTheme.hortisortGreen)),
+                          focusedBorder: OutlineInputBorder(
+                              borderSide:
+                                  BorderSide(color: AppTheme.hortisortGreen)),
+                        ),
+                        onSubmitted: (_) => _commitEdit(),
                       ),
-                      onSubmitted: (_) => _commitEdit(),
+                    )
+                  : Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (isGood || isDefective)
+                          Text(isGood ? 'Good' : 'Defective',
+                              style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                  color: isGood
+                                      ? AppTheme.hortisortGreen
+                                      : AppTheme.danger)),
+                        GestureDetector(
+                          onTap: _startEditing,
+                          child: Text(
+                            _formatNum(_currentFrequency),
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFFFFFFFF),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  )
-                : GestureDetector(
-                    onTap: _startEditing,
-                    child: Text(
-                      _formatNum(_currentFrequency),
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFFFFFFFF),
-                      ),
-                    ),
-                  ),
-            const Icon(Icons.arrow_upward,
-                size: 14, color: AppTheme.hortisortGreen),
-            const SizedBox(height: 4),
-            Container(
-              width: double.infinity,
-              height: barHeight.clamp(2, double.infinity).toDouble(),
-              margin: const EdgeInsets.symmetric(horizontal: 8),
-              decoration: BoxDecoration(
-                color: barBg,
-                border: Border.all(color: borderColor, width: 2),
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(4)),
+              Icon(Icons.arrow_upward, size: 14, color: borderColor),
+              const SizedBox(height: 4),
+              Container(
+                width: double.infinity,
+                height: barHeight.clamp(2, double.infinity).toDouble(),
+                margin: const EdgeInsets.symmetric(horizontal: 8),
+                decoration: BoxDecoration(
+                  color: barBg,
+                  border: Border.all(color: borderColor, width: barBorderWidth),
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(4)),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

@@ -41,6 +41,10 @@ class ConfiguratorProvider extends ChangeNotifier {
   final Set<String> _savedDefects = {};
   // Per-defect frequencies: defectId → {bandIndex: frequency}
   final Map<String, Map<int, double>> _defectFrequencies = {};
+  // Per-defect band classification: defectId → {bandIndex: 'Good' | 'Defective'}
+  final Map<String, Map<int, String>> _bandClasses = {};
+  // Selected band indices per defect for batch operations
+  final Map<String, Set<int>> _selectedBands = {};
 
   double get histogramMin => _histogramMin;
   double get histogramMax => _histogramMax;
@@ -116,6 +120,53 @@ class ConfiguratorProvider extends ChangeNotifier {
   Future<void> saveHistogramConfig() async {
     if (_currentDefKey != null) _savedDefects.add(_currentDefKey!);
     _isSaved = true;
+    notifyListeners();
+  }
+
+  // ── Band selection & classification ─────────────────
+
+  Set<int> selectedBandsFor(String defectKey) =>
+      _selectedBands[defectKey] ?? {};
+
+  bool isBandSelected(String defectKey, int index) =>
+      _selectedBands[defectKey]?.contains(index) ?? false;
+
+  int selectedBandCount(String defectKey) =>
+      (_selectedBands[defectKey]?.length ?? 0);
+
+  void toggleBandSelect(String defectKey, int index) {
+    _selectedBands[defectKey] ??= {};
+    if (_selectedBands[defectKey]!.contains(index)) {
+      _selectedBands[defectKey]!.remove(index);
+    } else {
+      _selectedBands[defectKey]!.add(index);
+    }
+    notifyListeners();
+  }
+
+  void clearBandSelection(String defectKey) {
+    _selectedBands[defectKey]?.clear();
+    notifyListeners();
+  }
+
+  String? getBandClass(String defectKey, int index) =>
+      _bandClasses[defectKey]?[index];
+
+  void markSelectedGood(String defectKey) {
+    _bandClasses[defectKey] ??= {};
+    for (final i in _selectedBands[defectKey] ?? {}) {
+      _bandClasses[defectKey]![i] = 'Good';
+    }
+    _selectedBands[defectKey]?.clear();
+    notifyListeners();
+  }
+
+  void markSelectedDefective(String defectKey) {
+    _bandClasses[defectKey] ??= {};
+    for (final i in _selectedBands[defectKey] ?? {}) {
+      _bandClasses[defectKey]![i] = 'Defective';
+    }
+    _selectedBands[defectKey]?.clear();
     notifyListeners();
   }
 
